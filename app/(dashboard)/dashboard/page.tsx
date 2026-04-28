@@ -21,9 +21,9 @@ type UpdateFilter = "all" | "major" | "minor" | "patch" | "up-to-date";
 
 // --- Components ---
 
-function StatCard({ label, value, color, description }: { label: string, value: string | number, color: string, description?: string }) {
-    return (
-        <div className="flex-1 min-w-[200px] p-8 rounded-[32px] border border-gray-800 bg-gray-950 shadow-xl transition-all hover:border-gray-700">
+function StatCard({ label, value, color, description, href }: { label: string, value: string | number, color: string, description?: string, href?: string }) {
+    const content = (
+        <div className={`flex-1 min-w-[200px] p-8 rounded-[32px] border border-gray-800 bg-gray-950 shadow-xl transition-all ${href ? 'hover:border-blue-500/50 cursor-pointer hover:bg-gray-900/50' : 'hover:border-gray-700'}`}>
             <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{label}</p>
             <div className="flex items-baseline gap-3 mt-3">
                 <p className={`text-4xl font-black tracking-tighter ${color}`}>{value}</p>
@@ -31,6 +31,12 @@ function StatCard({ label, value, color, description }: { label: string, value: 
             </div>
         </div>
     );
+
+    if (href) {
+        return <Link href={href}>{content}</Link>;
+    }
+
+    return content;
 }
 
 function UpdateTypeBadge({ type }: { type: EnhancedDependency["updateType"] }) {
@@ -165,36 +171,66 @@ export default function Dashboard() {
 
     const stats = useMemo(() => {
         const all = [...dependencies, ...devDependencies];
+        const safe = all.filter(d => d.updateType === "up-to-date").length;
         return {
             total: all.length,
-            major: all.filter(d => d.updateType === "major").length,
-            safe: all.filter(d => d.updateType === "up-to-date").length,
-            health: all.length > 0 ? Math.round((all.filter(d => d.updateType === "up-to-date").length / all.length) * 100) : 0
+            outdated: all.length - safe,
+            safe: safe,
+            health: all.length > 0 ? Math.round((safe / all.length) * 100) : 0
         };
     }, [dependencies, devDependencies]);
 
     if (status === "loading" || (status === "authenticated" && reposLoading)) {
         return (
-            <div className="min-h-screen bg-[#030712] flex items-center justify-center">
-                 <div className="flex flex-col items-center gap-6 animate-pulse">
-                    <div className="w-12 h-12 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                    <p className="text-[10px] font-black uppercase tracking-[0.5em] text-gray-500">Synchronizing Telemetry...</p>
-                </div>
+            <div className="flex flex-col items-center justify-center h-full gap-6 animate-pulse">
+                <div className="w-12 h-12 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                <p className="text-[10px] font-black uppercase tracking-[0.5em] text-gray-500">Synchronizing Telemetry...</p>
             </div>
         );
     }
 
     return (
-        <main className="p-8 max-w-[1500px] mx-auto space-y-12 animate-in fade-in duration-700">
+        <div className="p-8 space-y-12 animate-in fade-in duration-700">
+            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <StatCard 
+                    label="Connected Repositories" 
+                    value={repos.length} 
+                    color="text-white" 
+                    description="Source: GitHub" 
+                    href="/repositories"
+                />
+                <StatCard 
+                    label="Total Dependencies" 
+                    value={stats.total} 
+                    color="text-blue-500" 
+                    description="Current Target" 
+                    href="/repositories"
+                />
+                <StatCard 
+                    label="Outdated Dependencies" 
+                    value={stats.outdated} 
+                    color="text-red-500" 
+                    description="Action Required" 
+                    href="/repositories"
+                />
+                <StatCard 
+                    label="Up-to-Date Dependencies" 
+                    value={stats.safe} 
+                    color="text-green-500" 
+                    description="Secure Units" 
+                    href="/repositories"
+                />
+            </section>
+
              <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-10 border-b border-gray-800">
-                <div className="space-y-6">
+                <div className="space-y-6 flex-1">
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
                              <svg className="w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
                         </div>
                         <div className="space-y-1">
-                            <h1 className="text-4xl font-black tracking-tighter text-white uppercase italic">Developer <span className="text-blue-500 not-italic">Dashboard</span></h1>
-                            <p className="text-[10px] font-black tracking-[0.4em] text-gray-500 uppercase">Automated Dependency Orchestration</p>
+                            <h1 className="text-4xl font-black tracking-tighter text-white uppercase italic">Unit <span className="text-blue-500 not-italic">Analysis</span></h1>
+                            <p className="text-[10px] font-black tracking-[0.4em] text-gray-500 uppercase">Target: {activeRepo || 'None Selected'}</p>
                         </div>
                     </div>
 
@@ -214,7 +250,7 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                <div className="flex bg-gray-950 p-1.5 rounded-2xl border border-gray-800">
+                <div className="flex bg-gray-950 p-1.5 rounded-2xl border border-gray-800 self-end">
                     {(["all", "major", "minor", "up-to-date"] as const).map((t) => (
                         <button
                             key={t}
@@ -229,17 +265,10 @@ export default function Dashboard() {
                 </div>
             </header>
 
-            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <StatCard label="Connected Repos" value={repos.length} color="text-white" description="GitHub Unit Count" />
-                <StatCard label="Active Dependencies" value={stats.total} color="text-blue-500" description="Selected Target" />
-                <StatCard label="Critical Actions" value={stats.major} color="text-red-500" description="Major Upgrades" />
-                <StatCard label="Health Score" value={`${stats.health}%`} color={stats.health > 70 ? "text-green-500" : stats.health > 40 ? "text-yellow-500" : "text-red-500"} description="Project Integrity" />
-            </section>
-
             <div className="space-y-16">
                  <DependencyTable deps={dependencies} title="Production" loading={analysisLoading} filter={filter} />
                  <DependencyTable deps={devDependencies} title="Development" loading={analysisLoading} filter={filter} />
             </div>
-        </main>
+        </div>
     );
 }
