@@ -4,6 +4,18 @@ import { useEffect, useState, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { 
+    ResponsiveContainer, 
+    AreaChart, 
+    Area, 
+    XAxis, 
+    YAxis, 
+    CartesianGrid, 
+    Tooltip,
+    PieChart,
+    Pie,
+    Cell
+} from "recharts";
 
 // --- Types ---
 interface EnhancedDependency {
@@ -21,34 +33,54 @@ type UpdateFilter = "all" | "major" | "minor" | "patch" | "up-to-date";
 
 // --- Components ---
 
-function StatCard({ label, value, color, description, href }: { label: string, value: string | number, color: string, description?: string, href?: string }) {
+function StatCard({ label, value, color, icon, description, trend, href }: { 
+    label: string, 
+    value: string | number, 
+    color: string, 
+    icon: React.ReactNode,
+    description?: string, 
+    trend?: string,
+    href?: string 
+}) {
     const content = (
-        <div className={`flex-1 min-w-[200px] p-8 rounded-[32px] border border-gray-800 bg-gray-950 shadow-xl transition-all ${href ? 'hover:border-blue-500/50 cursor-pointer hover:bg-gray-900/50' : 'hover:border-gray-700'}`}>
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{label}</p>
-            <div className="flex items-baseline gap-3 mt-3">
-                <p className={`text-4xl font-black tracking-tighter ${color}`}>{value}</p>
-                {description && <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest">{description}</span>}
+        <div className={`group p-6 rounded-[24px] bg-white border border-slate-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-500 hover:-translate-y-1 relative overflow-hidden`}>
+            <div className={`absolute top-0 right-0 w-24 h-24 blur-3xl -mr-12 -mt-12 opacity-10 group-hover:opacity-20 transition-opacity ${color}`}></div>
+            
+            <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                    <div className={`p-3 rounded-xl bg-slate-50 border border-slate-100 text-slate-400 group-hover:text-indigo-600 group-hover:bg-indigo-50 transition-colors`}>
+                        {icon}
+                    </div>
+                    {trend && (
+                        <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-green-50 text-green-600 border border-green-100">
+                            {trend}
+                        </span>
+                    )}
+                </div>
+                
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-1">{label}</p>
+                <div className="flex items-baseline gap-2">
+                    <p className="text-3xl font-black tracking-tighter text-slate-900">{value}</p>
+                    {description && <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{description}</span>}
+                </div>
             </div>
         </div>
     );
 
-    if (href) {
-        return <Link href={href}>{content}</Link>;
-    }
-
+    if (href) return <Link href={href}>{content}</Link>;
     return content;
 }
 
 function UpdateTypeBadge({ type }: { type: EnhancedDependency["updateType"] }) {
     const configs = {
-        "up-to-date": { label: "Safe", styles: "text-green-400 bg-green-500/10 border-green-500/20" },
-        "patch": { label: "Update", styles: "text-blue-400 bg-blue-500/10 border-blue-500/20" },
-        "minor": { label: "Minor", styles: "text-yellow-400 bg-yellow-500/10 border-yellow-500/20" },
-        "major": { label: "Critical", styles: "text-red-400 bg-red-500/10 border-red-500/20" },
-        "unknown": { label: "Verify", styles: "text-gray-400 bg-gray-500/10 border-gray-500/20" },
+        "up-to-date": { label: "Optimized", styles: "text-green-600 bg-green-50 border-green-100" },
+        "patch": { label: "Update", styles: "text-blue-600 bg-blue-50 border-blue-100" },
+        "minor": { label: "Minor Upd", styles: "text-amber-600 bg-amber-50 border-amber-100" },
+        "major": { label: "Critical", styles: "text-rose-600 bg-rose-50 border-rose-100" },
+        "unknown": { label: "Verify", styles: "text-slate-500 bg-slate-50 border-slate-100" },
     };
     const config = configs[type];
-    return <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border tracking-widest ${config.styles}`}>{config.label}</span>;
+    return <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase border tracking-wider ${config.styles}`}>{config.label}</span>;
 }
 
 function DependencyTable({ deps, title, loading, filter }: { deps: EnhancedDependency[], title: string, loading: boolean, filter: UpdateFilter }) {
@@ -63,31 +95,42 @@ function DependencyTable({ deps, title, loading, filter }: { deps: EnhancedDepen
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between px-2">
-                <h3 className="font-black text-lg text-white uppercase tracking-tight">{title} <span className="text-gray-500 font-bold ml-1">Inventory</span></h3>
-                <span className="text-[10px] font-black text-gray-400 bg-gray-900 px-4 py-1.5 rounded-full border border-gray-800">{filteredDeps.length} LIBRARIES</span>
+                <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-6 bg-indigo-600 rounded-full shadow-lg shadow-indigo-200"></div>
+                    <h3 className="font-black text-lg text-slate-900 uppercase tracking-tight italic">{title} <span className="text-slate-400 not-italic ml-1">Libraries</span></h3>
+                </div>
+                <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-4 py-1.5 rounded-full border border-indigo-100">
+                    {filteredDeps.length} UNITS DETECTED
+                </span>
             </div>
             
-            <div className="relative overflow-hidden rounded-[32px] border border-gray-800 bg-gray-950 shadow-xl">
+            <div className="relative overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm border-collapse min-w-[800px]">
-                        <thead className="bg-gray-900/50 backdrop-blur border-b border-gray-800">
-                            <tr>
-                                <th className="px-8 py-6 font-black text-gray-500 uppercase text-[9px] tracking-widest">Library Name</th>
-                                <th className="px-8 py-6 font-black text-gray-500 uppercase text-[9px] tracking-widest">Installed</th>
-                                <th className="px-8 py-6 font-black text-gray-500 uppercase text-[9px] tracking-widest">Latest</th>
-                                <th className="px-8 py-6 font-black text-gray-500 uppercase text-[9px] tracking-widest">Status</th>
+                        <thead>
+                            <tr className="bg-slate-50/50 border-b border-slate-100">
+                                <th className="px-8 py-6 font-bold text-slate-400 uppercase text-[9px] tracking-[0.2em]">Package Identifier</th>
+                                <th className="px-8 py-6 font-bold text-slate-400 uppercase text-[9px] tracking-[0.2em]">Active Ver.</th>
+                                <th className="px-8 py-6 font-bold text-slate-400 uppercase text-[9px] tracking-[0.2em]">Latest Signal</th>
+                                <th className="px-8 py-6 font-bold text-slate-400 uppercase text-[9px] tracking-[0.2em]">Status</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-800">
+                        <tbody className="divide-y divide-slate-100">
                             {loading ? (
-                                <tr><td colSpan={4} className="px-8 py-10 animate-pulse text-gray-600 font-black uppercase text-[10px] tracking-widest text-center">Rebuilding Dependency Matrix...</td></tr>
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <tr key={i} className="animate-pulse">
+                                        <td colSpan={4} className="px-8 py-4 h-16 bg-slate-50/20"></td>
+                                    </tr>
+                                ))
                             ) : (
                                 filteredDeps.map((dep) => (
-                                    <tr key={dep.name} className="group hover:bg-gray-900/40 transition-all text-xs">
-                                        <td className="px-8 py-6 font-black text-blue-400 font-mono">{dep.name}</td>
-                                        <td className="px-8 py-6 text-gray-500 font-mono font-bold">{dep.currentVersion}</td>
-                                        <td className="px-8 py-6 text-white font-black font-mono">{dep.latestVersion}</td>
-                                        <td className="px-8 py-6"><UpdateTypeBadge type={dep.updateType} /></td>
+                                    <tr key={dep.name} className="group hover:bg-slate-50/50 transition-all duration-200">
+                                        <td className="px-8 py-5">
+                                            <span className="font-bold text-indigo-600 font-mono text-[13px] group-hover:text-slate-900 transition-colors">{dep.name}</span>
+                                        </td>
+                                        <td className="px-8 py-5 text-slate-400 font-mono text-[12px]">{dep.currentVersion}</td>
+                                        <td className="px-8 py-5 text-slate-900 font-bold font-mono text-[12px]">{dep.latestVersion}</td>
+                                        <td className="px-8 py-5"><UpdateTypeBadge type={dep.updateType} /></td>
                                     </tr>
                                 ))
                             )}
@@ -115,7 +158,6 @@ export default function Dashboard() {
     const [devDependencies, setDevDependencies] = useState<EnhancedDependency[]>([]);
     const [filter, setFilter] = useState<UpdateFilter>("all");
 
-    // 1. Initial Access & Repo List Fetch
     useEffect(() => {
         if (status === "unauthenticated") {
             router.push("/login");
@@ -133,8 +175,6 @@ export default function Dashboard() {
                     const res = await fetch("/api/github/repos");
                     const data = await res.json();
                     setRepos(data.repos || []);
-                    
-                    // Auto-select first repo if none active
                     if (data.repos?.length > 0 && !activeRepo) {
                         router.replace(`/dashboard?repo=${data.repos[0].full_name}`);
                     }
@@ -148,7 +188,6 @@ export default function Dashboard() {
         }
     }, [status, session, router, activeRepo]);
 
-    // 2. Fetch Analysis for Active Repo
     useEffect(() => {
         if (activeRepo && status === "authenticated") {
             const fetchAnalysis = async () => {
@@ -172,100 +211,172 @@ export default function Dashboard() {
     const stats = useMemo(() => {
         const all = [...dependencies, ...devDependencies];
         const safe = all.filter(d => d.updateType === "up-to-date").length;
+        const major = all.filter(d => d.updateType === "major").length;
+        const minor = all.filter(d => d.updateType === "minor").length;
         return {
             total: all.length,
             outdated: all.length - safe,
             safe: safe,
+            major,
+            minor,
             health: all.length > 0 ? Math.round((safe / all.length) * 100) : 0
         };
     }, [dependencies, devDependencies]);
 
+    const chartData = [
+        { name: 'Healthy', value: stats.safe, color: '#6366f1' },
+        { name: 'Minor', value: stats.minor, color: '#f59e0b' },
+        { name: 'Critical', value: stats.major, color: '#f43f5e' },
+    ].filter(d => d.value > 0);
+
     if (status === "loading" || (status === "authenticated" && reposLoading)) {
         return (
-            <div className="flex flex-col items-center justify-center h-full gap-6 animate-pulse">
-                <div className="w-12 h-12 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                <p className="text-[10px] font-black uppercase tracking-[0.5em] text-gray-500">Synchronizing Telemetry...</p>
+            <div className="flex flex-col items-center justify-center h-full gap-6">
+                <div className="w-12 h-12 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Loading Intelligence...</p>
             </div>
         );
     }
 
     return (
-        <div className="p-8 space-y-12 animate-in fade-in duration-700">
-            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <StatCard 
-                    label="Connected Repositories" 
-                    value={repos.length} 
-                    color="text-white" 
-                    description="Source: GitHub" 
-                    href="/repositories"
-                />
-                <StatCard 
-                    label="Total Dependencies" 
-                    value={stats.total} 
-                    color="text-blue-500" 
-                    description="Current Target" 
-                    href="/repositories"
-                />
-                <StatCard 
-                    label="Outdated Dependencies" 
-                    value={stats.outdated} 
-                    color="text-red-500" 
-                    description="Action Required" 
-                    href="/repositories"
-                />
-                <StatCard 
-                    label="Up-to-Date Dependencies" 
-                    value={stats.safe} 
-                    color="text-green-500" 
-                    description="Secure Units" 
-                    href="/repositories"
-                />
-            </section>
-
-             <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-10 border-b border-gray-800">
-                <div className="space-y-6 flex-1">
+        <div className="p-8 space-y-12 animate-slide-up max-w-[1400px] mx-auto">
+            {/* Header Section */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                <div className="space-y-4">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
-                             <svg className="w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+                        <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-2xl">
+                             <svg className="w-6 h-6 text-indigo-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
                         </div>
-                        <div className="space-y-1">
-                            <h1 className="text-4xl font-black tracking-tighter text-white uppercase italic">Unit <span className="text-blue-500 not-italic">Analysis</span></h1>
-                            <p className="text-[10px] font-black tracking-[0.4em] text-gray-500 uppercase">Target: {activeRepo || 'None Selected'}</p>
-                        </div>
+                        <h1 className="text-4xl font-black tracking-tight text-slate-900 uppercase italic">Active <span className="text-indigo-600 not-italic">Intelligence</span></h1>
                     </div>
-
-                    <div className="relative group">
+                    <div className="relative group max-w-sm">
                         <select 
                             value={activeRepo || ""}
                             onChange={(e) => router.push(`/dashboard?repo=${e.target.value}`)}
-                            className="bg-gray-900/50 border border-gray-800 text-white text-xs font-black uppercase tracking-widest rounded-2xl px-8 py-4 outline-none appearance-none hover:border-blue-500/50 cursor-pointer transition-all w-full md:w-[400px]"
+                            className="bg-white border border-slate-200 text-slate-900 text-[11px] font-bold uppercase tracking-widest rounded-xl px-10 py-4 outline-none appearance-none hover:border-indigo-300 cursor-pointer transition-all w-full shadow-sm"
                         >
                             {repos.map(r => (
                                 <option key={r.id} value={r.full_name}>{r.full_name}</option>
                             ))}
                         </select>
-                        <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500 group-hover:text-blue-500 transition-colors">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-indigo-500">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                         </div>
                     </div>
                 </div>
 
-                <div className="flex bg-gray-950 p-1.5 rounded-2xl border border-gray-800 self-end">
+                <div className="flex bg-slate-100/50 p-1 rounded-xl border border-slate-200 self-end">
                     {(["all", "major", "minor", "up-to-date"] as const).map((t) => (
                         <button
                             key={t}
                             onClick={() => setFilter(t)}
-                            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                                filter === t ? "bg-gray-900 border border-gray-800 text-white shadow-xl" : "text-gray-500 hover:text-gray-300"
+                            className={`px-6 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
+                                filter === t 
+                                ? "bg-white text-indigo-600 shadow-sm border border-slate-200" 
+                                : "text-slate-400 hover:text-slate-600"
                             }`}
                         >
                             {t === "up-to-date" ? "Healthy" : t}
                         </button>
                     ))}
                 </div>
-            </header>
+            </div>
 
-            <div className="space-y-16">
+            {/* Main Stats Grid */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                <div className="xl:col-span-8 space-y-8">
+                    <section className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        <StatCard 
+                            label="Health Index" 
+                            value={`${stats.health}%`} 
+                            color="bg-indigo-500" 
+                            icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-7.618 3.04M12 3v18" /></svg>}
+                            description="Stability Level" 
+                            trend="+1.2%"
+                        />
+                        <StatCard 
+                            label="Total Units" 
+                            value={stats.total} 
+                            color="bg-slate-600" 
+                            icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>}
+                            description="Active Packages" 
+                        />
+                        <StatCard 
+                            label="Risk Factor" 
+                            value={stats.major} 
+                            color="bg-rose-500" 
+                            icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>}
+                            description="Action Required" 
+                        />
+                    </section>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div className="bg-white border border-slate-200/60 rounded-[32px] p-8 shadow-sm">
+                             <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8">Asset Distribution</h4>
+                             <div className="h-[200px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie data={chartData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                                            {chartData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />)}
+                                        </Pie>
+                                        <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', fontSize: '10px', fontWeight: 'bold' }} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                             </div>
+                             <div className="flex justify-center gap-4 mt-4">
+                                {chartData.map((entry) => (
+                                    <div key={entry.name} className="flex items-center gap-1.5">
+                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }}></div>
+                                        <span className="text-[9px] font-bold text-slate-500 uppercase">{entry.name}</span>
+                                    </div>
+                                ))}
+                             </div>
+                        </div>
+
+                        <div className="bg-white border border-slate-200/60 rounded-[32px] p-8 shadow-sm flex flex-col justify-between">
+                            <div>
+                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Core Integrity</h4>
+                                <p className="text-3xl font-black text-slate-900 tracking-tight">STABLE</p>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Normal operational parameters.</p>
+                            </div>
+                            <div className="space-y-3 mt-8">
+                                <div className="flex justify-between text-[9px] font-black uppercase text-slate-400">
+                                    <span>Sync Status</span>
+                                    <span className="text-indigo-600">Active</span>
+                                </div>
+                                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                    <div className="h-full w-[88%] bg-indigo-500 rounded-full"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="xl:col-span-4">
+                    <div className="bg-slate-900 rounded-[32px] p-8 text-white h-full relative overflow-hidden shadow-2xl">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 blur-3xl -mr-16 -mt-16"></div>
+                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8 relative z-10">Neural Feed</h4>
+                        <div className="space-y-8 relative z-10">
+                            {[
+                                { title: "Update Detected", desc: "React v19.2 is available", time: "5m ago", color: "bg-indigo-500" },
+                                { title: "Scan Finished", desc: "No critical leaks found", time: "1h ago", color: "bg-emerald-500" },
+                                { title: "System Ready", desc: "All modules synchronized", time: "4h ago", color: "bg-slate-500" },
+                            ].map((item, i) => (
+                                <div key={i} className="flex gap-4 group cursor-pointer">
+                                    <div className={`w-1 h-10 ${item.color} rounded-full`}></div>
+                                    <div className="space-y-1">
+                                        <p className="text-[11px] font-black text-white uppercase tracking-tight">{item.title}</p>
+                                        <p className="text-[10px] text-slate-400 font-bold leading-relaxed">{item.desc}</p>
+                                        <p className="text-[8px] font-black text-indigo-400/80 uppercase">{item.time}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="space-y-16 pb-20">
                  <DependencyTable deps={dependencies} title="Production" loading={analysisLoading} filter={filter} />
                  <DependencyTable deps={devDependencies} title="Development" loading={analysisLoading} filter={filter} />
             </div>

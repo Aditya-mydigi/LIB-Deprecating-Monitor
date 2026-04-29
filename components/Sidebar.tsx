@@ -23,21 +23,21 @@ const sidebarLinks = [
         ),
     },
     {
-        name: "Notifications",
+        name: "Security Audits",
         href: "#",
         icon: (
             <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-7.618 3.04M12 3v18" />
             </svg>
         ),
         disabled: true,
     },
     {
-        name: "Profile",
+        name: "Analytics",
         href: "#",
         icon: (
             <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
         ),
         disabled: true,
@@ -48,33 +48,43 @@ export function Sidebar() {
     const pathname = usePathname();
 
     return (
-        <aside className="w-64 border-r border-gray-800 bg-[#030712] flex flex-col h-[calc(100vh-64px)] overflow-y-auto">
-            <div className="flex-1 py-6 px-4 space-y-2">
+        <aside className="w-64 border-r border-slate-200 bg-white flex flex-col h-[calc(100vh-64px)] overflow-y-auto">
+            <div className="flex-1 py-8 px-4 space-y-1">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] px-4 mb-4">Core Platform</p>
                 {sidebarLinks.map((link) => {
                     const isActive = pathname === link.href;
                     return (
                         <Link
                             key={link.name}
                             href={link.href}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${
+                            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all group ${
                                 isActive
-                                    ? "bg-blue-600/10 text-blue-500 shadow-lg shadow-blue-600/5 border border-blue-500/20"
+                                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
                                     : link.disabled
-                                    ? "text-gray-600 cursor-not-allowed"
-                                    : "text-gray-400 hover:text-white hover:bg-gray-800"
+                                    ? "text-slate-300 cursor-not-allowed opacity-60"
+                                    : "text-slate-500 hover:text-indigo-600 hover:bg-indigo-50"
                             }`}
                         >
-                            {link.icon}
+                            <span className={`${isActive ? "text-white" : "text-slate-400 group-hover:text-indigo-600"} transition-colors`}>
+                                {link.icon}
+                            </span>
                             {link.name}
                         </Link>
                     );
                 })}
             </div>
 
-            <div className="p-6 border-t border-gray-800">
-                <div className="bg-gray-900/50 rounded-2xl p-4 border border-gray-800">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">System Version</p>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-white mt-1">v1.2.4-PRO</p>
+            <div className="p-4">
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/60">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Environment</p>
+                    <div className="flex items-center justify-between mt-1">
+                        <p className="text-[10px] font-black text-slate-900 uppercase">Production v1.2</p>
+                        <div className="flex gap-0.5">
+                            <span className="w-1 h-3 bg-indigo-500 rounded-full"></span>
+                            <span className="w-1 h-3 bg-indigo-500/30 rounded-full"></span>
+                            <span className="w-1 h-3 bg-indigo-500/10 rounded-full"></span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </aside>
