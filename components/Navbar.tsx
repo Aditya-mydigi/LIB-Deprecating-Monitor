@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import { signOut } from "next-auth/react";
 
 export function Navbar() {
@@ -16,10 +17,15 @@ export function Navbar() {
             <div className="max-w-[1500px] mx-auto flex items-center justify-between">
                 <div className="flex items-center gap-10">
                     <Link href="/dashboard" className="flex items-center gap-3 group">
-                        <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 group-hover:scale-110 transition-transform">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
+                        <div className="h-12 w-auto flex items-center justify-start overflow-hidden group-hover:scale-105 transition-transform">
+                            <Image 
+                                src="/mdrLogo.png" 
+                                alt="MDR Logo" 
+                                width={160} 
+                                height={48} 
+                                className="h-full w-auto object-contain"
+                                priority
+                            />
                         </div>
                         <span className="font-black text-xl tracking-tighter uppercase italic text-slate-900">MDR</span>
                     </Link>

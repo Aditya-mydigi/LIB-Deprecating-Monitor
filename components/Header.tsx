@@ -1,16 +1,22 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { signOut } from "next-auth/react";
 
 export function Header() {
     return (
         <header className="h-16 border-b border-slate-200 bg-white/80 backdrop-blur-xl px-8 flex items-center justify-between sticky top-0 z-50">
             <div className="flex items-center gap-3">
-                <div className="w-9 h-9 grad-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
+                <div className="h-10 w-auto flex items-center justify-start overflow-hidden">
+                    <Image 
+                        src="/mdrLogo.png" 
+                        alt="MDR Logo" 
+                        width={140} 
+                        height={40} 
+                        className="h-full w-auto object-contain"
+                        priority
+                    />
                 </div>
                 <div className="flex flex-col -space-y-1">
                     <span className="font-black text-xl tracking-tighter uppercase grad-text">MDR</span>

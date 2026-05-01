@@ -157,6 +157,7 @@ export default function Dashboard() {
     const [dependencies, setDependencies] = useState<EnhancedDependency[]>([]);
     const [devDependencies, setDevDependencies] = useState<EnhancedDependency[]>([]);
     const [filter, setFilter] = useState<UpdateFilter>("all");
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (status === "unauthenticated") {
@@ -193,12 +194,21 @@ export default function Dashboard() {
             const fetchAnalysis = async () => {
                 setAnalysisLoading(true);
                 try {
+                    setError(null);
                     const [owner, repoName] = activeRepo.split("/");
                     const res = await fetch(`/api/github/dependencies?owner=${owner}&repo=${repoName}`);
                     const data = await res.json();
-                    setDependencies(data.dependencies || []);
-                    setDevDependencies(data.devDependencies || []);
+                    
+                    if (!res.ok) {
+                        setError(data.error || "Failed to fetch dependencies");
+                        setDependencies([]);
+                        setDevDependencies([]);
+                    } else {
+                        setDependencies(data.dependencies || []);
+                        setDevDependencies(data.devDependencies || []);
+                    }
                 } catch (err) {
+                    setError("Failed to establish neural link with repository");
                     console.error("Analysis failed:", err);
                 } finally {
                     setAnalysisLoading(false);
@@ -403,8 +413,22 @@ export default function Dashboard() {
             </div>
 
             <div className="space-y-16 pb-20">
-                 <DependencyTable deps={dependencies} title="Production" loading={analysisLoading} filter={filter} />
-                 <DependencyTable deps={devDependencies} title="Development" loading={analysisLoading} filter={filter} />
+                {error ? (
+                    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[32px] border border-dashed border-slate-200">
+                        <div className="p-4 bg-rose-50 rounded-2xl mb-4">
+                            <svg className="w-8 h-8 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">{error}</h3>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase mt-2">Check repository for package.json, requirements.txt, or pom.xml</p>
+                    </div>
+                ) : (
+                    <>
+                        <DependencyTable deps={dependencies} title="Production" loading={analysisLoading} filter={filter} />
+                        <DependencyTable deps={devDependencies} title="Development" loading={analysisLoading} filter={filter} />
+                    </>
+                )}
             </div>
         </div>
     </div>

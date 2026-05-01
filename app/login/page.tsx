@@ -3,6 +3,7 @@
 import { signIn, useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function LoginPage() {
     const [username, setUsername] = useState("");
@@ -45,6 +46,17 @@ export default function LoginPage() {
         <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] p-4 text-slate-900">
             <div className="w-full max-w-md p-12 bg-white border border-slate-200/60 rounded-[48px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.05)] space-y-10 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 blur-3xl -mr-16 -mt-16"></div>
+                
+                <div className="flex justify-center -mb-4">
+                    <Image 
+                        src="/mdrLogo.png" 
+                        alt="MDR Logo" 
+                        width={200} 
+                        height={60} 
+                        className="object-contain"
+                        priority
+                    />
+                </div>
                 
                 <div className="text-center space-y-4 relative z-10">
                     <div className="w-20 h-20 bg-indigo-600 rounded-[28px] flex items-center justify-center mx-auto shadow-2xl shadow-indigo-200 mb-8 transform hover:scale-105 transition-transform duration-500">
