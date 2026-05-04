@@ -7,10 +7,21 @@ export function normalizeVersion(version: string): string {
   return version.replace(/^[\^~]/, "");
 }
 
+const versionCache = new Map<string, { version: string; url: string | null; timestamp: number }>();
+const VERSION_TTL = 3600000; // 1 hour
+
 /**
  * Fetches the latest version and repository info of a package from the npm registry
  */
 export async function fetchLatestVersion(packageName: string): Promise<{ version: string; url: string | null }> {
+  const now = Date.now();
+  const cacheKey = `npm_${packageName}`;
+  const cached = versionCache.get(cacheKey);
+  
+  if (cached && (now - cached.timestamp < VERSION_TTL)) {
+    return { version: cached.version, url: cached.url };
+  }
+
   try {
     const response = await axios.get(`https://registry.npmjs.org/${packageName}`, {
       timeout: 5000,
@@ -19,14 +30,74 @@ export async function fetchLatestVersion(packageName: string): Promise<{ version
     const version = response.data["dist-tags"]?.latest || "unknown";
     let repoUrl = response.data.repository?.url || response.data.homepage || null;
 
-    // Clean up git+https:// or .git suffix
     if (repoUrl && typeof repoUrl === "string") {
       repoUrl = repoUrl.replace(/^git\+/, "").replace(/\.git$/, "").replace(/^git:/, "https:");
     }
 
-    return { version, url: repoUrl };
+    const result = { version, url: repoUrl };
+    versionCache.set(cacheKey, { ...result, timestamp: now });
+    
+    return result;
   } catch (error) {
-    console.error(`Failed to fetch latest version for ${packageName}:`, error);
+    return { version: "unknown", url: null };
+  }
+}
+
+/**
+ * Fetches the latest version from PyPI for Python packages
+ */
+export async function fetchLatestPythonVersion(packageName: string): Promise<{ version: string; url: string | null }> {
+  const now = Date.now();
+  const cacheKey = `pypi_${packageName}`;
+  const cached = versionCache.get(cacheKey);
+  
+  if (cached && (now - cached.timestamp < VERSION_TTL)) {
+    return { version: cached.version, url: cached.url };
+  }
+
+  try {
+    const response = await axios.get(`https://pypi.org/pypi/${packageName}/json`, {
+      timeout: 5000,
+    });
+    
+    const version = response.data.info.version || "unknown";
+    const repoUrl = response.data.info.project_url || null;
+
+    const result = { version, url: repoUrl };
+    versionCache.set(cacheKey, { ...result, timestamp: now });
+    
+    return result;
+  } catch (error) {
+    return { version: "unknown", url: null };
+  }
+}
+
+/**
+ * Fetches the latest version from Maven Central for Java packages
+ */
+export async function fetchLatestJavaVersion(identifier: string): Promise<{ version: string; url: string | null }> {
+  const now = Date.now();
+  const cacheKey = `maven_${identifier}`;
+  const cached = versionCache.get(cacheKey);
+  
+  if (cached && (now - cached.timestamp < VERSION_TTL)) {
+    return { version: cached.version, url: cached.url };
+  }
+
+  try {
+    const [groupId, artifactId] = identifier.split(":");
+    const query = artifactId ? `g:${groupId} AND a:${artifactId}` : `a:${groupId}`;
+    const response = await axios.get(`https://search.maven.org/solrsearch/select?q=${query}&rows=1&wt=json`, {
+      timeout: 5000,
+    });
+    
+    const version = response.data.response.docs[0]?.latestVersion || "unknown";
+    const result = { version, url: `https://search.maven.org/artifact/${groupId}/${artifactId}` };
+    
+    versionCache.set(cacheKey, { ...result, timestamp: now });
+    
+    return result;
+  } catch (error) {
     return { version: "unknown", url: null };
   }
 }

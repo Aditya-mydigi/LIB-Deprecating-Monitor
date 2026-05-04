@@ -1,9 +1,9 @@
-import { NextAuthOptions } from "next-auth";
-import GithubProvider from "next-auth/providers/github";
+import type { NextAuthConfig } from "next-auth";
+import Github from "next-auth/providers/github";
 
-export const authOptions: NextAuthOptions = {
+export const authOptions: NextAuthConfig = {
   providers: [
-    GithubProvider({
+    Github({
       clientId: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
       // Request repo scope so we can list private + public repos
@@ -20,7 +20,7 @@ export const authOptions: NextAuthOptions = {
      * Persist the OAuth access_token and GitHub user id into the JWT.
      * This runs exclusively on the server — never sent to the browser.
      */
-    async jwt({ token, account, profile }) {
+    async jwt({ token, account, profile }: { token: any; account?: any; profile?: any }) {
       if (account) {
         token.accessToken = account.access_token;
         token.userId = String((profile as { id?: number })?.id ?? "");
@@ -33,7 +33,7 @@ export const authOptions: NextAuthOptions = {
      * but is deliberately NOT serialised into the client-side session cookie.
      * Only id / name / email / image reach the browser.
      */
-    async session({ session, token }) {
+    async session({ session, token }: { session: any; token: any }) {
       if (session.user) {
         session.user.id = token.userId as string;
       }

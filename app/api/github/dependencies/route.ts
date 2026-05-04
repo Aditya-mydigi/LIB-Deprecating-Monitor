@@ -9,7 +9,14 @@ import {
   parsePomXml,
   NormalizedDependency 
 } from "@/lib/github";
-import { fetchLatestVersion, getUpdateType, getImpact } from "@/lib/npm";
+import { 
+  fetchLatestVersion, 
+  fetchLatestPythonVersion, 
+  fetchLatestJavaVersion, 
+  getUpdateType, 
+  getImpact 
+} from "@/lib/npm";
+import { getCache, setCache } from "@/lib/cache-utils";
 
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -35,7 +42,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing owner or repo" }, { status: 400 });
   }
 
+  const cacheKey = `${owner}_${repo}`;
+
   try {
+    const cachedData = await getCache<{ 
+      dependencies: any[], 
+      devDependencies: any[] 
+    }>(cacheKey);
+
+    if (cachedData) {
+      console.log(`[Cache] Hit for ${cacheKey}`);
+      return NextResponse.json(cachedData);
+    }
+    
+    console.log(`[Cache] Miss for ${cacheKey}, fetching fresh data...`);
+
     const detectedFiles = await detectProjectFiles(accessToken, owner, repo);
     
     if (detectedFiles.length === 0) {
@@ -46,22 +67,33 @@ export async function GET(request: NextRequest) {
       }, { status: 404 });
     }
 
-    const allNormalizedDeps: NormalizedDependency[] = [];
+    const allNormalizedDeps: (NormalizedDependency & { registry: string })[] = [];
 
     for (const file of detectedFiles) {
       const content = await fetchFileContent(accessToken, owner, repo, file);
       if (!content) continue;
 
       let fileDeps: NormalizedDependency[] = [];
-      if (file === "package.json") fileDeps = parsePackageJson(content);
-      else if (file === "requirements.txt") fileDeps = parseRequirementsTxt(content);
-      else if (file === "pyproject.toml") fileDeps = parsePyProjectToml(content);
-      else if (file === "pom.xml") fileDeps = parsePomXml(content);
+      let registry = "npm";
 
-      allNormalizedDeps.push(...fileDeps);
+      if (file === "package.json") {
+        fileDeps = parsePackageJson(content);
+        registry = "npm";
+      } else if (file === "requirements.txt") {
+        fileDeps = parseRequirementsTxt(content);
+        registry = "pypi";
+      } else if (file === "pyproject.toml") {
+        fileDeps = parsePyProjectToml(content);
+        registry = "pypi";
+      } else if (file === "pom.xml") {
+        fileDeps = parsePomXml(content);
+        registry = "maven";
+      }
+
+      allNormalizedDeps.push(...fileDeps.map(d => ({ ...d, registry })));
     }
 
-    const processDeps = async (deps: NormalizedDependency[]) => {
+    const processDeps = async (deps: (NormalizedDependency & { registry: string })[]) => {
       return Promise.all(
         deps.map(async (dep) => {
           let latestVersion = "unknown";
@@ -70,19 +102,22 @@ export async function GET(request: NextRequest) {
           let impact = "Verify";
           let command = "";
 
-          // Try to fetch latest version from NPM if it's likely an NPM package
-          // For others, we'll keep it as unknown for now to maintain performance
-          // and avoid complex multi-registry logic unless requested.
-          const isLikelyNpm = !dep.name.includes(":") && !detectedFiles.some(f => f.endsWith(".txt") || f.endsWith(".toml") || f.endsWith(".xml"));
-          
-          if (isLikelyNpm || detectedFiles.includes("package.json")) {
-            const { version, url } = await fetchLatestVersion(dep.name);
-            latestVersion = version;
-            repoUrl = url;
-            updateType = getUpdateType(dep.version, latestVersion);
-            impact = getImpact(updateType);
+          let versionResult;
+          if (dep.registry === "pypi") {
+            versionResult = await fetchLatestPythonVersion(dep.name);
+            command = `pip install ${dep.name} --upgrade`;
+          } else if (dep.registry === "maven") {
+            versionResult = await fetchLatestJavaVersion(dep.name);
+            command = `mvn versions:use-latest-releases -Dincludes=${dep.name}`;
+          } else {
+            versionResult = await fetchLatestVersion(dep.name);
             command = `npm install ${dep.name}@latest${dep.type === "dev" ? " -D" : ""}`;
           }
+
+          latestVersion = versionResult.version;
+          repoUrl = versionResult.url;
+          updateType = getUpdateType(dep.version, latestVersion);
+          impact = getImpact(updateType);
 
           let releasesUrl = repoUrl;
           if (repoUrl && repoUrl.includes("github.com")) {
@@ -98,6 +133,7 @@ export async function GET(request: NextRequest) {
             npmCommand: command,
             releasesUrl,
             isDev: dep.type === "dev",
+            registry: dep.registry,
           };
         })
       );
@@ -111,10 +147,14 @@ export async function GET(request: NextRequest) {
       processDeps(devDeps),
     ]);
 
-    return NextResponse.json({
+    const finalData = {
       dependencies: enhancedDeps,
       devDependencies: enhancedDevDeps,
-    });
+    };
+
+    await setCache(cacheKey, finalData);
+
+    return NextResponse.json(finalData);
   } catch (err: any) {
     const message = err instanceof Error ? err.message : "Failed to fetch dependencies";
     console.error("[/api/github/dependencies]", message);
