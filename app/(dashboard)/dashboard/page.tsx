@@ -166,18 +166,18 @@ export default function Dashboard() {
         }
 
         if (status === "authenticated") {
-            if (!(session as any)?.accessToken) {
-                router.push("/connect-github");
-                return;
-            }
+            // Check for accessToken removed to allow manual connection via Repository module
 
             const fetchRepos = async () => {
                 try {
-                    const res = await fetch("/api/github/repos");
+                    const res = await fetch("/api/repos");
                     const data = await res.json();
-                    setRepos(data.repos || []);
-                    if (data.repos?.length > 0 && !activeRepo) {
-                        router.replace(`/dashboard?repo=${data.repos[0].full_name}`);
+                    // Filter to only active repos from our database
+                    const activeRepos = (data.repos || []).filter((r: any) => r.isActive);
+                    setRepos(activeRepos);
+                    
+                    if (activeRepos.length > 0 && !activeRepo) {
+                        router.replace(`/dashboard?repo=${activeRepos[0].fullName}`);
                     }
                 } catch (err) {
                     console.error("Failed to fetch repositories:", err);
@@ -271,7 +271,7 @@ export default function Dashboard() {
                                     className="bg-white border border-slate-200 text-slate-600 text-[11px] font-bold uppercase tracking-widest rounded-xl px-12 py-4 outline-none appearance-none hover:border-indigo-300 hover:text-indigo-600 cursor-pointer transition-all w-full shadow-sm"
                                 >
                                     {repos.map(r => (
-                                        <option key={r.id} value={r.full_name}>{r.full_name}</option>
+                                        <option key={r.id} value={r.fullName}>{r.fullName}</option>
                                     ))}
                                 </select>
                                 <div className="absolute left-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-hover:text-indigo-500 transition-colors">
