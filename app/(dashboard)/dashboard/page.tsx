@@ -158,6 +158,7 @@ export default function Dashboard() {
     const [devDependencies, setDevDependencies] = useState<EnhancedDependency[]>([]);
     const [filter, setFilter] = useState<UpdateFilter>("all");
     const [error, setError] = useState<string | null>(null);
+    const [revalidating, setRevalidating] = useState(false);
 
     useEffect(() => {
         if (status === "unauthenticated") {
@@ -191,12 +192,17 @@ export default function Dashboard() {
 
     useEffect(() => {
         if (activeRepo && status === "authenticated") {
-            const fetchAnalysis = async () => {
-                setAnalysisLoading(true);
+            const fetchAnalysis = async (forceRefresh = false) => {
+                if (forceRefresh) {
+                    setRevalidating(true);
+                } else {
+                    setAnalysisLoading(true);
+                }
+
                 try {
                     setError(null);
                     const [owner, repoName] = activeRepo.split("/");
-                    const res = await fetch(`/api/github/dependencies?owner=${owner}&repo=${repoName}`);
+                    const res = await fetch(`/api/github/dependencies?owner=${owner}&repo=${repoName}${forceRefresh ? "&refresh=true" : ""}`);
                     const data = await res.json();
                     
                     if (!res.ok) {
@@ -206,12 +212,19 @@ export default function Dashboard() {
                     } else {
                         setDependencies(data.dependencies || []);
                         setDevDependencies(data.devDependencies || []);
+
+                        // If this was a cache hit, trigger a background refresh
+                        if (data.fromCache && !forceRefresh) {
+                            console.log("Cache hit, triggering background re-validation...");
+                            fetchAnalysis(true);
+                        }
                     }
                 } catch (err) {
                     setError("Failed to establish neural link with repository");
                     console.error("Analysis failed:", err);
                 } finally {
                     setAnalysisLoading(false);
+                    setRevalidating(false);
                 }
             };
             fetchAnalysis();
@@ -261,7 +274,15 @@ export default function Dashboard() {
                                 </div>
                                 <div>
                                     <h1 className="text-4xl font-black tracking-tight text-slate-900 uppercase italic">Active <span className="text-indigo-600 not-italic">Intelligence</span></h1>
-                                    <p className="text-[10px] font-black tracking-[0.3em] text-slate-400 uppercase mt-1">Real-time dependency telemetry and risk assessment</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <p className="text-[10px] font-black tracking-[0.3em] text-slate-400 uppercase">Real-time dependency telemetry and risk assessment</p>
+                                        {revalidating && (
+                                            <div className="flex items-center gap-1 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100 animate-pulse">
+                                                <div className="w-1 h-1 bg-indigo-600 rounded-full"></div>
+                                                <span className="text-[8px] font-black text-indigo-600 uppercase tracking-widest">Syncing Live Data...</span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                             <div className="relative group max-w-sm">

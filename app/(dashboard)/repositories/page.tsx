@@ -39,7 +39,7 @@ export default function RepositoriesPage() {
                 if (dbRes.ok) {
                     const activeFullNames = dbData.repos
                         .filter((r: any) => r.isActive)
-                        .map((r: any) => r.full_name);
+                        .map((r: any) => r.fullName);
                     setMonitoredFullNames(new Set(activeFullNames));
                 }
             } catch (err: any) {

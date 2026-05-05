@@ -27,15 +27,14 @@ export async function POST(req: Request) {
         // Sync repos
         for (const r of repos) {
             await prisma.repo.upsert({
-                where: { id: `${user.id}-${r.full_name}` }, // Compound unique or just id? I'll use a prefix for simple cuid
+                where: { id: `${user.id}-${r.full_name}` },
                 update: { isActive: r.isActive },
                 create: {
-                   // Using full_name as a unique-ish ID for this user's repo integration
-                   id: `${user.id}-${r.full_name}`,
-                   userId: user.id,
-                   name: r.name,
-                   fullName: r.full_name,
-                   isActive: r.isActive
+                    id: `${user.id}-${r.full_name}`,
+                    userId: user.id,
+                    name: r.name,
+                    fullName: r.full_name,
+                    isActive: r.isActive
                 }
             });
         }

@@ -25,6 +25,8 @@ model Repo {
   lastScannedAt DateTime?
 
   user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, fullName])
 }
 
 model Notification {

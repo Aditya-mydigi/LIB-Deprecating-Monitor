@@ -9,27 +9,36 @@ interface CacheEntry<T> {
 }
 
 /**
- * Gets data from the file-based cache
- * @param key The cache key (usually owner_repo)
- * @param ttl Milliseconds before the cache expires (default 1 hour)
+ * Gets data from the file-based cache with metadata
+ * @param key The cache key
  */
-export async function getCache<T>(key: string, ttl: number = 3600000): Promise<T | null> {
+export async function getCacheWithMeta<T>(key: string): Promise<CacheEntry<T> | null> {
   try {
     const fileName = `${key.replace(/[^a-zA-Z0-9]/g, "_")}.json`;
     const filePath = path.join(CACHE_DIR, fileName);
     
     const content = await fs.readFile(filePath, "utf-8");
-    const entry: CacheEntry<T> = JSON.parse(content);
-    
-    const now = Date.now();
-    if (now - entry.timestamp > ttl) {
-      return null; // Expired
-    }
-    
-    return entry.data;
+    return JSON.parse(content);
   } catch (error) {
-    return null; // Cache miss or error
+    return null;
   }
+}
+
+/**
+ * Gets data from the file-based cache
+ * @param key The cache key (usually owner_repo)
+ * @param ttl Milliseconds before the cache expires (default 1 hour)
+ */
+export async function getCache<T>(key: string, ttl: number = 3600000): Promise<T | null> {
+  const entry = await getCacheWithMeta<T>(key);
+  if (!entry) return null;
+  
+  const now = Date.now();
+  if (now - entry.timestamp > ttl) {
+    return null; // Expired
+  }
+  
+  return entry.data;
 }
 
 /**

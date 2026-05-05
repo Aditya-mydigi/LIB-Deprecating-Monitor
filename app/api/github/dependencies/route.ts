@@ -16,7 +16,7 @@ import {
   getUpdateType, 
   getImpact 
 } from "@/lib/npm";
-import { getCache, setCache } from "@/lib/cache-utils";
+import { getCache, getCacheWithMeta, setCache } from "@/lib/cache-utils";
 
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -42,20 +42,27 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing owner or repo" }, { status: 400 });
   }
 
+  const refresh = searchParams.get("refresh") === "true";
   const cacheKey = `${owner}_${repo}`;
 
   try {
-    const cachedData = await getCache<{ 
-      dependencies: any[], 
-      devDependencies: any[] 
-    }>(cacheKey);
+    if (!refresh) {
+      const cacheEntry = await getCacheWithMeta<{ 
+        dependencies: any[], 
+        devDependencies: any[] 
+      }>(cacheKey);
 
-    if (cachedData) {
-      console.log(`[Cache] Hit for ${cacheKey}`);
-      return NextResponse.json(cachedData);
+      if (cacheEntry) {
+        console.log(`[Cache] Hit for ${cacheKey}`);
+        return NextResponse.json({
+          ...cacheEntry.data,
+          fromCache: true,
+          cachedAt: cacheEntry.timestamp
+        });
+      }
     }
     
-    console.log(`[Cache] Miss for ${cacheKey}, fetching fresh data...`);
+    console.log(`[Cache] ${refresh ? "Forced refresh" : "Miss"} for ${cacheKey}, fetching fresh data...`);
 
     const detectedFiles = await detectProjectFiles(accessToken, owner, repo);
     
