@@ -1,0 +1,218 @@
+{
+  "timestamp": 1777963648497,
+  "data": {
+    "dependencies": [
+      {
+        "name": "@prisma/client",
+        "currentVersion": "^5.22.0",
+        "latestVersion": "7.8.0",
+        "updateType": "major",
+        "impact": "Breaking changes, review required",
+        "npmCommand": "npm install @prisma/client@latest",
+        "releasesUrl": "https://github.com/prisma/prisma/releases",
+        "isDev": false,
+        "registry": "npm"
+      },
+      {
+        "name": "axios",
+        "currentVersion": "^1.9.0",
+        "latestVersion": "1.16.0",
+        "updateType": "minor",
+        "impact": "New features, generally safe",
+        "npmCommand": "npm install axios@latest",
+        "releasesUrl": "https://github.com/axios/axios/releases",
+        "isDev": false,
+        "registry": "npm"
+      },
+      {
+        "name": "lucide-react",
+        "currentVersion": "^1.11.0",
+        "latestVersion": "1.14.0",
+        "updateType": "minor",
+        "impact": "New features, generally safe",
+        "npmCommand": "npm install lucide-react@latest",
+        "releasesUrl": "https://github.com/lucide-icons/lucide/releases",
+        "isDev": false,
+        "registry": "npm"
+      },
+      {
+        "name": "next",
+        "currentVersion": "^15.3.1",
+        "latestVersion": "16.2.4",
+        "updateType": "major",
+        "impact": "Breaking changes, review required",
+        "npmCommand": "npm install next@latest",
+        "releasesUrl": "https://github.com/vercel/next.js/releases",
+        "isDev": false,
+        "registry": "npm"
+      },
+      {
+        "name": "next-auth",
+        "currentVersion": "^5.0.0-beta.31",
+        "latestVersion": "4.24.14",
+        "updateType": "minor",
+        "impact": "New features, generally safe",
+        "npmCommand": "npm install next-auth@latest",
+        "releasesUrl": "https://github.com/nextauthjs/next-auth/releases",
+        "isDev": false,
+        "registry": "npm"
+      },
+      {
+        "name": "prisma",
+        "currentVersion": "^5.22.0",
+        "latestVersion": "7.8.0",
+        "updateType": "major",
+        "impact": "Breaking changes, review required",
+        "npmCommand": "npm install prisma@latest",
+        "releasesUrl": "https://github.com/prisma/prisma/releases",
+        "isDev": false,
+        "registry": "npm"
+      },
+      {
+        "name": "react",
+        "currentVersion": "^19.1.0",
+        "latestVersion": "19.2.5",
+        "updateType": "minor",
+        "impact": "New features, generally safe",
+        "npmCommand": "npm install react@latest",
+        "releasesUrl": "https://github.com/facebook/react/releases",
+        "isDev": false,
+        "registry": "npm"
+      },
+      {
+        "name": "react-dom",
+        "currentVersion": "^19.1.0",
+        "latestVersion": "19.2.5",
+        "updateType": "minor",
+        "impact": "New features, generally safe",
+        "npmCommand": "npm install react-dom@latest",
+        "releasesUrl": "https://github.com/facebook/react/releases",
+        "isDev": false,
+        "registry": "npm"
+      },
+      {
+        "name": "react-markdown",
+        "currentVersion": "^10.1.0",
+        "latestVersion": "10.1.0",
+        "updateType": "up-to-date",
+        "impact": "Up to date",
+        "npmCommand": "npm install react-markdown@latest",
+        "releasesUrl": "https://github.com/remarkjs/react-markdown/releases",
+        "isDev": false,
+        "registry": "npm"
+      },
+      {
+        "name": "recharts",
+        "currentVersion": "^3.8.1",
+        "latestVersion": "3.8.1",
+        "updateType": "up-to-date",
+        "impact": "Up to date",
+        "npmCommand": "npm install recharts@latest",
+        "releasesUrl": "https://github.com/recharts/recharts/releases",
+        "isDev": false,
+        "registry": "npm"
+      },
+      {
+        "name": "typescript",
+        "currentVersion": "^5.8.3",
+        "latestVersion": "6.0.3",
+        "updateType": "major",
+        "impact": "Breaking changes, review required",
+        "npmCommand": "npm install typescript@latest",
+        "releasesUrl": "https://github.com/microsoft/TypeScript/releases",
+        "isDev": false,
+        "registry": "npm"
+      }
+    ],
+    "devDependencies": [
+      {
+        "name": "@types/node",
+        "currentVersion": "^22.15.3",
+        "latestVersion": "25.6.0",
+        "updateType": "major",
+        "impact": "Breaking changes, review required",
+        "npmCommand": "npm install @types/node@latest -D",
+        "releasesUrl": "https://github.com/DefinitelyTyped/DefinitelyTyped/releases",
+        "isDev": true,
+        "registry": "npm"
+      },
+      {
+        "name": "@types/react",
+        "currentVersion": "^19.1.2",
+        "latestVersion": "19.2.14",
+        "updateType": "minor",
+        "impact": "New features, generally safe",
+        "npmCommand": "npm install @types/react@latest -D",
+        "releasesUrl": "https://github.com/DefinitelyTyped/DefinitelyTyped/releases",
+        "isDev": true,
+        "registry": "npm"
+      },
+      {
+        "name": "@types/react-dom",
+        "currentVersion": "^19.1.2",
+        "latestVersion": "19.2.3",
+        "updateType": "minor",
+        "impact": "New features, generally safe",
+        "npmCommand": "npm install @types/react-dom@latest -D",
+        "releasesUrl": "https://github.com/DefinitelyTyped/DefinitelyTyped/releases",
+        "isDev": true,
+        "registry": "npm"
+      },
+      {
+        "name": "autoprefixer",
+        "currentVersion": "^10.4.21",
+        "latestVersion": "10.5.0",
+        "updateType": "minor",
+        "impact": "New features, generally safe",
+        "npmCommand": "npm install autoprefixer@latest -D",
+        "releasesUrl": "https://github.com/postcss/autoprefixer/releases",
+        "isDev": true,
+        "registry": "npm"
+      },
+      {
+        "name": "eslint",
+        "currentVersion": "^9.25.1",
+        "latestVersion": "10.3.0",
+        "updateType": "major",
+        "impact": "Breaking changes, review required",
+        "npmCommand": "npm install eslint@latest -D",
+        "releasesUrl": "https://github.com/eslint/eslint/releases",
+        "isDev": true,
+        "registry": "npm"
+      },
+      {
+        "name": "eslint-config-next",
+        "currentVersion": "^15.3.1",
+        "latestVersion": "16.2.4",
+        "updateType": "major",
+        "impact": "Breaking changes, review required",
+        "npmCommand": "npm install eslint-config-next@latest -D",
+        "releasesUrl": "https://github.com/vercel/next.js/releases",
+        "isDev": true,
+        "registry": "npm"
+      },
+      {
+        "name": "postcss",
+        "currentVersion": "^8.5.3",
+        "latestVersion": "8.5.14",
+        "updateType": "patch",
+        "impact": "Bug fixes, safe update",
+        "npmCommand": "npm install postcss@latest -D",
+        "releasesUrl": "https://github.com/postcss/postcss/releases",
+        "isDev": true,
+        "registry": "npm"
+      },
+      {
+        "name": "tailwindcss",
+        "currentVersion": "^3.4.17",
+        "latestVersion": "4.2.4",
+        "updateType": "major",
+        "impact": "Breaking changes, review required",
+        "npmCommand": "npm install tailwindcss@latest -D",
+        "releasesUrl": "https://github.com/tailwindlabs/tailwindcss/releases",
+        "isDev": true,
+        "registry": "npm"
+      }
+    ]
+  }
+}

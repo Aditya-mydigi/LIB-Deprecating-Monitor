@@ -9,19 +9,33 @@ datasource db {
 }
 
 model User {
-  id       String @id @default(cuid())
-  username String @unique
-  password String
-  repos    Repo[]
+  id            String         @id @default(cuid())
+  username      String         @unique
+  password      String
+  repos         Repo[]
+  notifications Notification[]
 }
 
 model Repo {
-  id            String @id @default(cuid())
+  id            String    @id @default(cuid())
   userId        String
   name          String
   fullName      String
-  isActive      Boolean @default(true)
+  isActive      Boolean   @default(true)
   lastScannedAt DateTime?
 
   user User @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  repoName    String
+  packageName String
+  severity    String // High, Medium, Low
+  message     String
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
