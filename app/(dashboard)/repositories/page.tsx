@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { GitHubRepo } from "@/lib/github";
 import { useRouter } from "next/navigation";
+import { useRef } from "react";
 
 export default function RepositoriesPage() {
     const { data: session, status } = useSession();
@@ -13,6 +14,8 @@ export default function RepositoriesPage() {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
     const router = useRouter();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
         if (status === "unauthenticated") {
@@ -31,22 +34,35 @@ export default function RepositoriesPage() {
             try {
                 const githubRes = await fetch("/api/github/repos");
                 const githubData = await githubRes.json();
-                if (!githubRes.ok) throw new Error(githubData.error || "Failed to fetch GitHub repos");
+                const githubRepos = githubData.repos || [];
 
                 const dbRes = await fetch("/api/repos");
                 const dbData = await dbRes.json();
+                const dbRepos = dbData.repos || [];
                 
-                if (dbRes.ok) {
-                    const activeFullNames = (dbData.repos || [])
-                        .filter((r: any) => r.isActive)
-                        .map((r: any) => r.fullName);
-                    const activeSet = new Set<string>(activeFullNames);
-                    setMonitoredFullNames(activeSet);
+                const activeFullNames = dbRepos
+                    .filter((r: any) => r.isActive)
+                    .map((r: any) => r.fullName);
+                const activeSet = new Set<string>(activeFullNames);
+                setMonitoredFullNames(activeSet);
 
-                    // Filter to only show active ones as per user request
-                    const filteredRepos = githubData.repos.filter((r: any) => activeSet.has(r.full_name));
-                    setRepos(filteredRepos);
-                }
+                // Combine GitHub repos and Manual repos
+                const manualRepos = dbRepos
+                    .filter((r: any) => r.fullName.startsWith("manual/"))
+                    .map((r: any) => ({
+                        id: r.id,
+                        name: r.name,
+                        full_name: r.fullName,
+                        language: "Manual",
+                        owner: "manual",
+                        isActive: r.isActive
+                    }));
+
+                // Filter GitHub repos to only show active ones as per previous logic (or show all?)
+                // Actually, the previous code filtered them: githubData.repos.filter((r: any) => activeSet.has(r.full_name))
+                const activeGithubRepos = githubRepos.filter((r: any) => activeSet.has(r.full_name));
+                
+                setRepos([...activeGithubRepos, ...manualRepos]);
             } catch (err: any) {
                 setError(err.message);
             } finally {
@@ -116,6 +132,38 @@ export default function RepositoriesPage() {
             setSaving(false);
         }
     };
+
+    const handleManualClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(true);
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const res = await fetch("/api/manual/upload", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Upload failed");
+
+            // Redirect to dashboard with the new repo selected
+            router.push(`/dashboard?repo=${data.fullName}`);
+        } catch (err: any) {
+            alert(err.message);
+        } finally {
+            setUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    };
+
 
     const [showConnectModal, setShowConnectModal] = useState(false);
 
@@ -190,8 +238,17 @@ export default function RepositoriesPage() {
                                             </td>
                                             <td className="px-8 py-6">
                                                 <div className="flex items-center gap-2">
-                                                    <svg className="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
-                                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">GitHub</span>
+                                                    {repo.full_name.startsWith("manual/") ? (
+                                                        <>
+                                                            <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Manual</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <svg className="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+                                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">GitHub</span>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="px-8 py-6 text-[11px] font-black text-indigo-600">--</td>
@@ -262,8 +319,11 @@ export default function RepositoriesPage() {
                                     onClick={() => {
                                         if (platform.name === "GitHub") {
                                             signIn("github", { callbackUrl: "/onboarding" });
+                                        } else if (platform.name === "Manual") {
+                                            handleManualClick();
                                         }
                                     }}
+                                    disabled={uploading}
                                     className="p-8 rounded-[32px] border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/50 transition-all group flex flex-col items-center gap-4 shadow-sm"
                                 >
                                     <svg className="w-10 h-10 text-slate-300 group-hover:text-indigo-600 transition-colors" fill={platform.name === "Manual" ? "none" : "currentColor"} viewBox="0 0 24 24" stroke={platform.name === "Manual" ? "currentColor" : "none"}>
@@ -283,6 +343,14 @@ export default function RepositoriesPage() {
                     </div>
                 </div>
             )}
+
+            <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                onChange={handleFileUpload}
+                accept=".json,.txt,.toml,.xml"
+            />
         </div>
     );
 }

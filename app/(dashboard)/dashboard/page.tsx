@@ -202,7 +202,13 @@ export default function Dashboard() {
                 try {
                     setError(null);
                     const [owner, repoName] = activeRepo.split("/");
-                    const res = await fetch(`/api/github/dependencies?owner=${owner}&repo=${repoName}${forceRefresh ? "&refresh=true" : ""}`);
+                    
+                    let url = `/api/github/dependencies?owner=${owner}&repo=${repoName}${forceRefresh ? "&refresh=true" : ""}`;
+                    if (owner === "manual") {
+                        url = `/api/manual/dependencies?repo=${repoName}${forceRefresh ? "&refresh=true" : ""}`;
+                    }
+                    
+                    const res = await fetch(url);
                     const data = await res.json();
                     
                     if (!res.ok) {
