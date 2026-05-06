@@ -27,7 +27,7 @@ export default function ConnectGithubPage() {
         // Note: For account linking in NextAuth 5 without DB, 
         // GitHub might overwrite the credentials identity.
         // This is fine for this internal tool as login was the gatekeeper.
-        await signIn("github", { callbackUrl: "/dashboard" });
+        await signIn("github", { callbackUrl: "/onboarding" });
     };
 
     if (status === "loading" || (status === "authenticated" && (session as any).accessToken)) {

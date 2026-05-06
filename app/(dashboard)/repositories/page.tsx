@@ -32,15 +32,20 @@ export default function RepositoriesPage() {
                 const githubRes = await fetch("/api/github/repos");
                 const githubData = await githubRes.json();
                 if (!githubRes.ok) throw new Error(githubData.error || "Failed to fetch GitHub repos");
-                setRepos(githubData.repos);
 
                 const dbRes = await fetch("/api/repos");
                 const dbData = await dbRes.json();
+                
                 if (dbRes.ok) {
-                    const activeFullNames = dbData.repos
+                    const activeFullNames = (dbData.repos || [])
                         .filter((r: any) => r.isActive)
                         .map((r: any) => r.fullName);
-                    setMonitoredFullNames(new Set(activeFullNames));
+                    const activeSet = new Set<string>(activeFullNames);
+                    setMonitoredFullNames(activeSet);
+
+                    // Filter to only show active ones as per user request
+                    const filteredRepos = githubData.repos.filter((r: any) => activeSet.has(r.full_name));
+                    setRepos(filteredRepos);
                 }
             } catch (err: any) {
                 setError(err.message);
@@ -125,20 +130,19 @@ export default function RepositoriesPage() {
                 </div>
                 <div className="flex gap-4">
                     <button
-                        onClick={() => setShowConnectModal(true)}
+                        onClick={() => router.push("/onboarding")}
                         className="px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl transition-all shadow-xl shadow-indigo-200 uppercase tracking-widest text-xs active:scale-[0.98] flex items-center gap-2"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
                         </svg>
-                        Connect
+                        Update Selection
                     </button>
                     <button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="px-10 py-4 bg-white border border-slate-200 hover:bg-slate-50 disabled:opacity-50 text-slate-600 font-black rounded-2xl transition-all uppercase tracking-widest text-xs active:scale-[0.98]"
+                        onClick={() => setShowConnectModal(true)}
+                        className="px-10 py-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-black rounded-2xl transition-all shadow-sm uppercase tracking-widest text-xs active:scale-[0.98] flex items-center gap-2"
                     >
-                        {saving ? "Synchronizing..." : "Save Config"}
+                        Connect New
                     </button>
                 </div>
             </header>
@@ -257,7 +261,7 @@ export default function RepositoriesPage() {
                                     key={platform.name}
                                     onClick={() => {
                                         if (platform.name === "GitHub") {
-                                            signIn("github", { callbackUrl: "/repositories" });
+                                            signIn("github", { callbackUrl: "/onboarding" });
                                         }
                                     }}
                                     className="p-8 rounded-[32px] border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/50 transition-all group flex flex-col items-center gap-4 shadow-sm"
