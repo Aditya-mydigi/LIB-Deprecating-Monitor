@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
 import Credentials from "next-auth/providers/credentials";
+import { prisma } from "@/lib/db";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -36,8 +37,37 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.accessToken = account.access_token;
         if (profile) {
            token.userId = String((profile as { id?: number })?.id ?? "");
+           
+           // Persist GitHub token to the "admin" user for persistence across logins
+           if (account.provider === "github") {
+              try {
+                await prisma.user.upsert({
+                  where: { username: "admin" },
+                  update: { githubAccessToken: account.access_token },
+                  create: { 
+                    username: "admin", 
+                    password: "password_not_needed", 
+                    githubAccessToken: account.access_token 
+                  }
+                });
+              } catch (e) {
+                console.error("Failed to persist github token:", e);
+              }
+           }
         } else if (account.provider === "credentials") {
            token.userId = "1";
+        }
+      } else if (!token.accessToken) {
+        // Subsequent hits: try to load from DB if missing in current session
+        try {
+          const dbUser = await prisma.user.findUnique({
+             where: { username: "admin" }
+          });
+          if (dbUser?.githubAccessToken) {
+            token.accessToken = dbUser.githubAccessToken;
+          }
+        } catch (e) {
+          console.error("Failed to load persisted token:", e);
         }
       }
       return token;

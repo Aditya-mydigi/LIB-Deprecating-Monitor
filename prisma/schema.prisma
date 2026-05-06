@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
   engineType = "library"
 }
 
@@ -9,11 +9,12 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  username      String         @unique
-  password      String
-  repos         Repo[]
-  notifications Notification[]
+  id                String         @id @default(cuid())
+  username          String         @unique
+  password          String
+  githubAccessToken String?
+  notifications     Notification[]
+  repos             Repo[]
 }
 
 model Repo {
@@ -23,8 +24,7 @@ model Repo {
   fullName      String
   isActive      Boolean   @default(true)
   lastScannedAt DateTime?
-
-  user User @relation(fields: [userId], references: [id])
+  user          User      @relation(fields: [userId], references: [id])
 
   @@unique([userId, fullName])
 }
@@ -34,10 +34,9 @@ model Notification {
   userId      String
   repoName    String
   packageName String
-  severity    String // High, Medium, Low
+  severity    String
   message     String
   isRead      Boolean  @default(false)
   createdAt   DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
