@@ -1,5 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
+import { prisma } from "./lib/db";
 async function test() {
   try {
     const user = await prisma.user.findFirst();
