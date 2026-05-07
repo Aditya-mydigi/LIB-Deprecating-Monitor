@@ -164,9 +164,13 @@ export default function RepositoriesPage() {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        const name = prompt("Enter a name for this repository:", file.name);
+        if (!name) return; // Cancel if no name
+
         setUploading(true);
         const formData = new FormData();
         formData.append("file", file);
+        formData.append("name", name);
 
         try {
             const res = await fetch("/api/manual/upload", {

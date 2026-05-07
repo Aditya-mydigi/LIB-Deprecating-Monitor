@@ -29,6 +29,8 @@ export async function POST(req: Request) {
 
         const content = await file.text();
         const fileName = file.name;
+        const customName = formData.get("name") as string;
+        const repoName = customName || fileName;
         
         let fileDeps: NormalizedDependency[] = [];
         let registry = "npm";
@@ -129,7 +131,7 @@ export async function POST(req: Request) {
         };
 
         // Cache the results
-        const cacheKey = `manual_${fileName}`;
+        const cacheKey = `manual_${repoName}`;
         await setCache(cacheKey, finalData);
 
         // Register the "Repo" in the database so it shows up in the dashboard
@@ -146,13 +148,13 @@ export async function POST(req: Request) {
             });
         }
 
-        const fullName = `manual/${fileName}`;
+        const fullName = `manual/${repoName}`;
         await prisma.repo.upsert({
             where: { userId_fullName: { userId: user.id, fullName: fullName } },
             update: { isActive: true, lastScannedAt: new Date() },
             create: {
                 userId: user.id,
-                name: fileName,
+                name: repoName,
                 fullName: fullName,
                 isActive: true,
                 lastScannedAt: new Date()
