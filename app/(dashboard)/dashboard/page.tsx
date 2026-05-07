@@ -16,6 +16,7 @@ import {
     Pie,
     Cell
 } from "recharts";
+import { Search, Filter, X, ShieldAlert, Zap, Box, CheckCircle2 } from "lucide-react";
 
 // --- Types ---
 interface EnhancedDependency {
@@ -84,12 +85,37 @@ function UpdateTypeBadge({ type }: { type: EnhancedDependency["updateType"] }) {
     return <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase border tracking-wider ${config.styles}`}>{config.label}</span>;
 }
 
-function DependencyTable({ deps, title, loading, filter }: { deps: EnhancedDependency[], title: string, loading: boolean, filter: UpdateFilter }) {
+function DependencyTable({ deps, title, loading, filter, search }: { 
+    deps: EnhancedDependency[], 
+    title: string, 
+    loading: boolean, 
+    filter: UpdateFilter,
+    search: string
+}) {
     const filteredDeps = useMemo(() => {
-        if (filter === "all") return deps;
-        if (filter === "minor") return deps.filter(d => d.updateType === "minor" || d.updateType === "patch");
-        return deps.filter(d => d.updateType === filter);
-    }, [deps, filter]);
+        let result = deps;
+        
+        // Apply category filter
+        if (filter !== "all") {
+            if (filter === "minor") {
+                result = result.filter(d => d.updateType === "minor" || d.updateType === "patch");
+            } else {
+                result = result.filter(d => d.updateType === filter);
+            }
+        }
+
+        // Apply search filter
+        if (search) {
+            const query = search.toLowerCase();
+            result = result.filter(d => 
+                d.name.toLowerCase().includes(query) || 
+                d.currentVersion.toLowerCase().includes(query) ||
+                d.latestVersion.toLowerCase().includes(query)
+            );
+        }
+
+        return result;
+    }, [deps, filter, search]);
 
     if (!loading && deps.length === 0) return null;
 
@@ -158,6 +184,7 @@ export default function Dashboard() {
     const [dependencies, setDependencies] = useState<EnhancedDependency[]>([]);
     const [devDependencies, setDevDependencies] = useState<EnhancedDependency[]>([]);
     const [filter, setFilter] = useState<UpdateFilter>("all");
+    const [searchQuery, setSearchQuery] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [revalidating, setRevalidating] = useState(false);
 
@@ -283,7 +310,7 @@ export default function Dashboard() {
                                     <svg className="w-6 h-6 text-indigo-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
                                 </div>
                                 <div>
-                                    <h1 className="text-4xl font-black tracking-tight text-slate-900 uppercase italic">Active <span className="text-indigo-600 not-italic">Intelligence</span></h1>
+                                    <h1 className="text-4xl font-black tracking-tight text-slate-900 uppercase italic">Library <span className="text-indigo-600 not-italic">Monitoring System</span></h1>
                                     <div className="flex items-center gap-2 mt-1">
                                         <p className="text-[10px] font-black tracking-[0.3em] text-slate-400 uppercase">Real-time dependency telemetry and risk assessment</p>
                                         {revalidating && (
@@ -295,37 +322,9 @@ export default function Dashboard() {
                                     </div>
                                 </div>
                             </div>
-                            <div className="relative group max-w-sm">
-                                <select 
-                                    value={activeRepo || ""}
-                                    onChange={(e) => router.push(`/dashboard?repo=${e.target.value}`)}
-                                    className="bg-white border border-slate-200 text-slate-600 text-[11px] font-bold uppercase tracking-widest rounded-xl px-12 py-4 outline-none appearance-none hover:border-indigo-300 hover:text-indigo-600 cursor-pointer transition-all w-full shadow-sm"
-                                >
-                                    {repos.map(r => (
-                                        <option key={r.id} value={r.fullName}>{r.fullName}</option>
-                                    ))}
-                                </select>
-                                <div className="absolute left-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-hover:text-indigo-500 transition-colors">
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                                </div>
-                            </div>
+
                         </div>
 
-                        <div className="flex bg-white p-1 rounded-2xl border border-slate-200/60 shadow-sm self-end overflow-x-auto">
-                            {(["all", "vulnerable", "major", "minor", "up-to-date"] as const).map((t) => (
-                                <button
-                                    key={t}
-                                    onClick={() => setFilter(t)}
-                                    className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                                        filter === t 
-                                        ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200" 
-                                        : "text-slate-400 hover:text-slate-600"
-                                    }`}
-                                >
-                                    {t === "up-to-date" ? "Healthy" : t === "vulnerable" ? "Critical" : t}
-                                </button>
-                            ))}
-                        </div>
                     </div>
                 </div>
             </div>
@@ -456,8 +455,57 @@ export default function Dashboard() {
                     </div>
                 ) : (
                     <>
-                        <DependencyTable deps={dependencies} title="Production" loading={analysisLoading} filter={filter} />
-                        <DependencyTable deps={devDependencies} title="Development" loading={analysisLoading} filter={filter} />
+                        {/* Interactive Filter Bar */}
+                        <div className="bg-white p-2 rounded-[2.5rem] border border-slate-200/60 shadow-xl shadow-slate-200/5 flex flex-wrap items-center gap-3">
+                            <div className="relative flex-1 min-w-[300px]">
+                                <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <input 
+                                    type="text"
+                                    placeholder="Search library, version or impact..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-14 pr-6 py-4 bg-slate-50 border-transparent rounded-[2rem] text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none"
+                                />
+                                {searchQuery && (
+                                    <button 
+                                        onClick={() => setSearchQuery("")}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 hover:bg-slate-200 rounded-full transition-colors"
+                                    >
+                                        <X className="w-3.5 h-3.5 text-slate-500" />
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="flex items-center gap-2 p-1 bg-slate-50 rounded-[2rem]">
+                                <div className="flex items-center gap-2 px-4 py-2">
+                                    <Filter className="w-3.5 h-3.5 text-slate-400" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Risk Level</span>
+                                </div>
+                                {[
+                                    { id: "all", label: "All", icon: <Box className="w-3 h-3" /> },
+                                    { id: "vulnerable", label: "Critical", icon: <ShieldAlert className="w-3 h-3" /> },
+                                    { id: "major", label: "Major", icon: <Zap className="w-3 h-3" /> },
+                                    { id: "minor", label: "Minor", icon: <Zap className="w-3 h-3 text-amber-500" /> },
+                                    { id: "up-to-date", label: "Healthy", icon: <CheckCircle2 className="w-3 h-3" /> }
+                                ].map((t) => (
+                                    <button
+                                        key={t.id}
+                                        onClick={() => setFilter(t.id as UpdateFilter)}
+                                        className={`flex items-center gap-2 px-6 py-2.5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${
+                                            filter === t.id 
+                                                ? "bg-white text-indigo-600 shadow-md border border-slate-100" 
+                                                : "text-slate-400 hover:text-slate-600"
+                                        }`}
+                                    >
+                                        {t.icon}
+                                        {t.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <DependencyTable deps={dependencies} title="Production" loading={analysisLoading} filter={filter} search={searchQuery} />
+                        <DependencyTable deps={devDependencies} title="Development" loading={analysisLoading} filter={filter} search={searchQuery} />
                     </>
                 )}
             </div>
