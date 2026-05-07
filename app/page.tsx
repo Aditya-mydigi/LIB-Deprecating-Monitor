@@ -9,10 +9,20 @@ export default function RootPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (status === "authenticated") {
-      router.push("/dashboard");
-    } else if (status === "unauthenticated") {
+    if (status === "unauthenticated") {
       router.push("/login");
+    } else if (status === "authenticated") {
+      // Check if they have any active repos
+      fetch("/api/repos")
+        .then(res => res.json())
+        .then(data => {
+            if (data.repos?.length > 0) {
+                router.push("/dashboard");
+            } else {
+                router.push("/onboarding");
+            }
+        })
+        .catch(() => router.push("/dashboard"));
     }
   }, [status, router]);
 

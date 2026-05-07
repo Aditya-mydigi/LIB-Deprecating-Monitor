@@ -158,6 +158,7 @@ export default function Dashboard() {
     const [devDependencies, setDevDependencies] = useState<EnhancedDependency[]>([]);
     const [filter, setFilter] = useState<UpdateFilter>("all");
     const [error, setError] = useState<string | null>(null);
+    const [revalidating, setRevalidating] = useState(false);
 
     useEffect(() => {
         if (status === "unauthenticated") {
@@ -166,18 +167,18 @@ export default function Dashboard() {
         }
 
         if (status === "authenticated") {
-            if (!(session as any)?.accessToken) {
-                router.push("/connect-github");
-                return;
-            }
+            // Check for accessToken removed to allow manual connection via Repository module
 
             const fetchRepos = async () => {
                 try {
-                    const res = await fetch("/api/github/repos");
+                    const res = await fetch("/api/repos");
                     const data = await res.json();
-                    setRepos(data.repos || []);
-                    if (data.repos?.length > 0 && !activeRepo) {
-                        router.replace(`/dashboard?repo=${data.repos[0].full_name}`);
+                    // Filter to only active repos from our database
+                    const activeRepos = (data.repos || []).filter((r: any) => r.isActive);
+                    setRepos(activeRepos);
+                    
+                    if (activeRepos.length > 0 && !activeRepo) {
+                        router.replace(`/dashboard?repo=${activeRepos[0].fullName}`);
                     }
                 } catch (err) {
                     console.error("Failed to fetch repositories:", err);
@@ -191,12 +192,23 @@ export default function Dashboard() {
 
     useEffect(() => {
         if (activeRepo && status === "authenticated") {
-            const fetchAnalysis = async () => {
-                setAnalysisLoading(true);
+            const fetchAnalysis = async (forceRefresh = false) => {
+                if (forceRefresh) {
+                    setRevalidating(true);
+                } else {
+                    setAnalysisLoading(true);
+                }
+
                 try {
                     setError(null);
                     const [owner, repoName] = activeRepo.split("/");
-                    const res = await fetch(`/api/github/dependencies?owner=${owner}&repo=${repoName}`);
+                    
+                    let url = `/api/github/dependencies?owner=${owner}&repo=${repoName}${forceRefresh ? "&refresh=true" : ""}`;
+                    if (owner === "manual") {
+                        url = `/api/manual/dependencies?repo=${repoName}${forceRefresh ? "&refresh=true" : ""}`;
+                    }
+                    
+                    const res = await fetch(url);
                     const data = await res.json();
                     
                     if (!res.ok) {
@@ -206,12 +218,19 @@ export default function Dashboard() {
                     } else {
                         setDependencies(data.dependencies || []);
                         setDevDependencies(data.devDependencies || []);
+
+                        // If this was a cache hit, trigger a background refresh
+                        if (data.fromCache && !forceRefresh) {
+                            console.log("Cache hit, triggering background re-validation...");
+                            fetchAnalysis(true);
+                        }
                     }
                 } catch (err) {
                     setError("Failed to establish neural link with repository");
                     console.error("Analysis failed:", err);
                 } finally {
                     setAnalysisLoading(false);
+                    setRevalidating(false);
                 }
             };
             fetchAnalysis();
@@ -261,7 +280,15 @@ export default function Dashboard() {
                                 </div>
                                 <div>
                                     <h1 className="text-4xl font-black tracking-tight text-slate-900 uppercase italic">Active <span className="text-indigo-600 not-italic">Intelligence</span></h1>
-                                    <p className="text-[10px] font-black tracking-[0.3em] text-slate-400 uppercase mt-1">Real-time dependency telemetry and risk assessment</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <p className="text-[10px] font-black tracking-[0.3em] text-slate-400 uppercase">Real-time dependency telemetry and risk assessment</p>
+                                        {revalidating && (
+                                            <div className="flex items-center gap-1 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100 animate-pulse">
+                                                <div className="w-1 h-1 bg-indigo-600 rounded-full"></div>
+                                                <span className="text-[8px] font-black text-indigo-600 uppercase tracking-widest">Syncing Live Data...</span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                             <div className="relative group max-w-sm">
@@ -271,7 +298,7 @@ export default function Dashboard() {
                                     className="bg-white border border-slate-200 text-slate-600 text-[11px] font-bold uppercase tracking-widest rounded-xl px-12 py-4 outline-none appearance-none hover:border-indigo-300 hover:text-indigo-600 cursor-pointer transition-all w-full shadow-sm"
                                 >
                                     {repos.map(r => (
-                                        <option key={r.id} value={r.full_name}>{r.full_name}</option>
+                                        <option key={r.id} value={r.fullName}>{r.fullName}</option>
                                     ))}
                                 </select>
                                 <div className="absolute left-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-hover:text-indigo-500 transition-colors">

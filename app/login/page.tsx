@@ -16,7 +16,7 @@ export default function LoginPage() {
     // If already has a session, go attempt connection or dashboard
     useEffect(() => {
         if (status === "authenticated") {
-            router.push("/connect-github");
+            router.push("/dashboard");
         }
     }, [status, router]);
 
@@ -35,8 +35,8 @@ export default function LoginPage() {
             setError("Invalid credentials");
             setLoading(false);
         } else {
-            // Success -> go to connect github
-            router.push("/connect-github");
+            // Success -> go to dashboard
+            router.push("/dashboard");
         }
     };
 

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
+import { createNotification } from "@/lib/notification-service";
 
 export async function POST() {
     const session = await auth();
@@ -100,18 +101,14 @@ export async function POST() {
             }
         ];
 
-        // Add some random dates
         const createdNotifications = [];
+        const userEmail = session.user?.email;
+
         for (const n of mockNotifications) {
-            const date = new Date();
-            date.setHours(date.getHours() - Math.floor(Math.random() * 100));
-            
             createdNotifications.push(
-                await prisma.notification.create({
-                    data: {
-                        ...n,
-                        createdAt: date
-                    }
+                await createNotification({
+                    ...n,
+                    userEmail,
                 })
             );
         }
