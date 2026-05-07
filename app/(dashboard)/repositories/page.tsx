@@ -197,6 +197,7 @@ export default function RepositoriesPage() {
     if (status === "loading") return null;
 
     return (
+        <>
         <div className="p-8 space-y-12 animate-slide-up max-w-[1400px] mx-auto">
             <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 pb-8 border-b border-slate-100">
                 <div>
@@ -323,50 +324,115 @@ export default function RepositoriesPage() {
                     </table>
                 </div>
             </div>
+        </div>
 
             {/* Connect Modal */}
             {showConnectModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowConnectModal(false)}></div>
-                    <div className="relative bg-white rounded-[48px] p-12 w-full max-w-2xl shadow-2xl space-y-10 animate-in zoom-in-95 duration-200">
-                        <div className="text-center space-y-2">
-                            <h2 className="text-3xl font-black tracking-tighter uppercase italic text-slate-900">Establish <span className="text-indigo-600 not-italic">Connection</span></h2>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Select Integration Platform</p>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            {[
-                                { name: "GitHub", icon: <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" /> },
-                                { name: "Bitbucket", icon: <path d="M1.378 1.704a.798.798 0 00-.795.897l2.25 18.665c.04.33.32.576.65.576h16.89c.333 0 .61-.246.65-.576l2.25-18.665a.798.798 0 00-.795-.897H1.378zM17.062 14.5H6.938L5.75 5.5h12.5l-1.188 9z" /> },
-                                { name: "GitLab", icon: <path d="M22.65 14.39L20.21 6.8a.76.76 0 00-.28-.38.76.76 0 00-.47-.14.76.76 0 00-.47.14.76.76 0 00-.28.38l-2.44 7.59H5.73l-2.44-7.59a.75.75 0 00-.28-.38.76.76 0 00-.47-.14.76.76 0 00-.47.14.76.76 0 00-.28.38L1.35 14.39a.75.75 0 00.27.84l10.15 7.37a.76.76 0 00.43.14.76.76 0 00.43-.14l10.15-7.37a.75.75 0 00.27-.84z" /> },
-                                { name: "Manual", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /> },
-                            ].map((platform) => (
-                                <button
-                                    key={platform.name}
-                                    onClick={() => {
-                                        if (platform.name === "GitHub") {
-                                            signIn("github", { callbackUrl: "/onboarding" });
-                                        } else if (platform.name === "Manual") {
-                                            handleManualClick();
-                                        }
-                                    }}
-                                    disabled={uploading}
-                                    className="p-8 rounded-[32px] border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/50 transition-all group flex flex-col items-center gap-4 shadow-sm"
-                                >
-                                    <svg className="w-10 h-10 text-slate-300 group-hover:text-indigo-600 transition-colors" fill={platform.name === "Manual" ? "none" : "currentColor"} viewBox="0 0 24 24" stroke={platform.name === "Manual" ? "currentColor" : "none"}>
-                                        {platform.icon}
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+                    <div 
+                        className="absolute inset-0 bg-slate-900/60 backdrop-blur-md transition-opacity" 
+                        onClick={() => setShowConnectModal(false)}
+                    ></div>
+                    
+                    <div className="relative w-full max-w-3xl bg-white/95 backdrop-blur-2xl rounded-[40px] shadow-[0_0_40px_-10px_rgba(79,70,229,0.15)] border border-white/50 overflow-hidden animate-in zoom-in-95 fade-in duration-300">
+                        {/* Decorative Top Gradient */}
+                        <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+                        
+                        <div className="p-10 sm:p-14 space-y-12">
+                            <div className="text-center space-y-4">
+                                <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner ring-4 ring-white">
+                                    <svg className="w-10 h-10 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
                                     </svg>
-                                    <span className="text-[11px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-900">{platform.name}</span>
-                                </button>
-                            ))}
+                                </div>
+                                <h2 className="text-4xl font-black tracking-tight text-slate-900">
+                                    Connect <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">Workspace</span>
+                                </h2>
+                                <p className="text-sm font-semibold text-slate-400 uppercase tracking-widest">Select your source control provider</p>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                {[
+                                    { 
+                                        name: "GitHub", 
+                                        description: "Connect to your GitHub repositories",
+                                        icon: <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />,
+                                        colorClass: "hover:bg-[#24292F] hover:border-[#24292F]",
+                                        iconColor: "text-[#24292F]",
+                                        ready: true 
+                                    },
+                                    { 
+                                        name: "Bitbucket", 
+                                        description: "Import from Bitbucket workspace",
+                                        icon: <path d="M1.378 1.704a.798.798 0 00-.795.897l2.25 18.665c.04.33.32.576.65.576h16.89c.333 0 .61-.246.65-.576l2.25-18.665a.798.798 0 00-.795-.897H1.378zM17.062 14.5H6.938L5.75 5.5h12.5l-1.188 9z" />,
+                                        colorClass: "hover:bg-[#2684FF] hover:border-[#2684FF]",
+                                        iconColor: "text-[#2684FF]",
+                                        ready: false 
+                                    },
+                                    { 
+                                        name: "GitLab", 
+                                        description: "Connect to GitLab projects",
+                                        icon: <path d="M22.65 14.39L20.21 6.8a.76.76 0 00-.28-.38.76.76 0 00-.47-.14.76.76 0 00-.47.14.76.76 0 00-.28.38l-2.44 7.59H5.73l-2.44-7.59a.75.75 0 00-.28-.38.76.76 0 00-.47-.14.76.76 0 00-.47.14.76.76 0 00-.28.38L1.35 14.39a.75.75 0 00.27.84l10.15 7.37a.76.76 0 00.43.14.76.76 0 00.43-.14l10.15-7.37a.75.75 0 00.27-.84z" />,
+                                        colorClass: "hover:bg-[#FC6D26] hover:border-[#FC6D26]",
+                                        iconColor: "text-[#FC6D26]",
+                                        ready: false 
+                                    },
+                                    { 
+                                        name: "Manual Upload", 
+                                        description: "Upload package files directly",
+                                        icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />,
+                                        colorClass: "hover:bg-indigo-600 hover:border-indigo-600",
+                                        iconColor: "text-indigo-600",
+                                        ready: true,
+                                        isStroke: true
+                                    },
+                                ].map((platform) => (
+                                    <button
+                                        key={platform.name}
+                                        onClick={() => {
+                                            if (!platform.ready) return;
+                                            if (platform.name === "GitHub") {
+                                                signIn("github", { callbackUrl: "/onboarding" });
+                                            } else if (platform.name === "Manual Upload") {
+                                                handleManualClick();
+                                            }
+                                        }}
+                                        disabled={uploading || !platform.ready}
+                                        className={`relative p-6 rounded-3xl border-2 border-slate-100 bg-white transition-all duration-300 group text-left flex items-start gap-5
+                                            ${platform.ready ? `hover:shadow-xl hover:-translate-y-1 ${platform.colorClass}` : 'opacity-60 cursor-not-allowed grayscale'}`}
+                                    >
+                                        <div className={`p-3 rounded-2xl bg-slate-50 transition-colors duration-300 flex-shrink-0 ${platform.ready ? 'group-hover:bg-white/20' : ''}`}>
+                                            <svg className={`w-8 h-8 transition-colors duration-300 ${platform.ready ? `${platform.iconColor} group-hover:text-white` : 'text-slate-400'}`} fill={platform.isStroke ? "none" : "currentColor"} viewBox="0 0 24 24" stroke={platform.isStroke ? "currentColor" : "none"}>
+                                                {platform.icon}
+                                            </svg>
+                                        </div>
+                                        <div className="space-y-1 mt-1">
+                                            <h3 className={`font-black text-lg text-slate-900 transition-colors duration-300 ${platform.ready ? 'group-hover:text-white' : ''}`}>
+                                                {platform.name}
+                                            </h3>
+                                            <p className={`text-xs font-semibold text-slate-400 transition-colors duration-300 ${platform.ready ? 'group-hover:text-white/80' : ''}`}>
+                                                {platform.description}
+                                            </p>
+                                        </div>
+                                        {!platform.ready && (
+                                            <div className="absolute top-4 right-4 bg-slate-100 text-slate-400 text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
+                                                Coming Soon
+                                            </div>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
-                        <button
-                            onClick={() => setShowConnectModal(false)}
-                            className="w-full py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors"
-                        >
-                            Cancel Protocol
-                        </button>
+                        {/* Bottom Actions */}
+                        <div className="bg-slate-50/80 p-6 border-t border-slate-100/50">
+                            <button
+                                onClick={() => setShowConnectModal(false)}
+                                className="w-full py-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400 hover:text-slate-900 hover:bg-white rounded-2xl transition-all shadow-sm hover:shadow"
+                            >
+                                Close Window
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -378,6 +444,6 @@ export default function RepositoriesPage() {
                 onChange={handleFileUpload}
                 accept=".json,.txt,.toml,.xml"
             />
-        </div>
+        </>
     );
 }
