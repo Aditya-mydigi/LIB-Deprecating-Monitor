@@ -27,6 +27,7 @@ interface EnhancedDependency {
     npmCommand: string;
     releasesUrl: string | null;
     isDev: boolean;
+    repo?: string;
 }
 
 type UpdateFilter = "all" | "vulnerable" | "major" | "minor" | "patch" | "up-to-date";
@@ -114,24 +115,26 @@ function DependencyTable({ deps, title, loading, filter }: { deps: EnhancedDepen
                                 <th className="px-8 py-6 font-bold text-slate-400 uppercase text-[9px] tracking-[0.2em]">Active Ver.</th>
                                 <th className="px-8 py-6 font-bold text-slate-400 uppercase text-[9px] tracking-[0.2em]">Latest Signal</th>
                                 <th className="px-8 py-6 font-bold text-slate-400 uppercase text-[9px] tracking-[0.2em]">Status</th>
+                                {deps.some(d => d.repo) && <th className="px-8 py-6 font-bold text-slate-400 uppercase text-[9px] tracking-[0.2em]">Repository</th>}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 Array.from({ length: 5 }).map((_, i) => (
                                     <tr key={i} className="animate-pulse">
-                                        <td colSpan={4} className="px-8 py-4 h-16 bg-slate-50/20"></td>
+                                        <td colSpan={deps.some(d => d.repo) ? 5 : 4} className="px-8 py-4 h-16 bg-slate-50/20"></td>
                                     </tr>
                                 ))
                             ) : (
                                 filteredDeps.map((dep) => (
-                                    <tr key={dep.name} className="group hover:bg-slate-50/50 transition-all duration-200">
+                                    <tr key={`${dep.name}-${dep.repo}`} className="group hover:bg-slate-50/50 transition-all duration-200">
                                         <td className="px-8 py-5">
                                             <span className="font-bold text-indigo-600 font-mono text-[13px] group-hover:text-slate-900 transition-colors">{dep.name}</span>
                                         </td>
                                         <td className="px-8 py-5 text-slate-400 font-mono text-[12px]">{dep.currentVersion}</td>
                                         <td className="px-8 py-5 text-slate-900 font-bold font-mono text-[12px]">{dep.latestVersion}</td>
                                         <td className="px-8 py-5"><UpdateTypeBadge type={dep.updateType} /></td>
+                                        {dep.repo && <td className="px-8 py-5"><span className="px-3 py-1 rounded-lg bg-slate-100 text-slate-600 text-[9px] font-bold uppercase tracking-widest">{dep.repo.split('/').pop()}</span></td>}
                                     </tr>
                                 ))
                             )}
@@ -211,8 +214,8 @@ export default function Dashboard() {
                 const result = await fetchRepoDependencies(owner, repoName, activeRepo);
 
                 if (result.ok) {
-                    setDependencies(result.data.dependencies || []);
-                    setDevDependencies(result.data.devDependencies || []);
+                    setDependencies((result.data.dependencies || []).map((d: EnhancedDependency) => ({ ...d, repo: activeRepo })));
+                    setDevDependencies((result.data.devDependencies || []).map((d: EnhancedDependency) => ({ ...d, repo: activeRepo })));
                     setError(null);
                 } else {
                     setDependencies([]);
@@ -231,6 +234,15 @@ export default function Dashboard() {
                 return;
             }
 
+            // Only fetch if we don't already have cached data for all repos
+            const cachedRepos = dependencies.map(d => d.repo).filter(Boolean);
+            const hasAllRepos = repos.every(r => cachedRepos.includes(r.fullName));
+
+            if (hasAllRepos && dependencies.length > 0) {
+                setAnalysisLoading(false);
+                return;
+            }
+
             const results = await Promise.all(repos.map((repo) => {
                 const [owner, repoName] = repo.fullName.split("/");
                 return fetchRepoDependencies(owner, repoName, repo.fullName);
@@ -242,8 +254,8 @@ export default function Dashboard() {
 
             results.forEach((result) => {
                 if (result.ok) {
-                    aggregatedDependencies.push(...(result.data.dependencies || []));
-                    aggregatedDevDependencies.push(...(result.data.devDependencies || []));
+                    aggregatedDependencies.push(...(result.data.dependencies || []).map((d: EnhancedDependency) => ({ ...d, repo: result.repo })));
+                    aggregatedDevDependencies.push(...(result.data.devDependencies || []).map((d: EnhancedDependency) => ({ ...d, repo: result.repo })));
                 } else {
                     failedRepos.push(result.repo);
                 }
@@ -262,7 +274,7 @@ export default function Dashboard() {
         };
 
         fetchAnalysisForActiveRepos();
-    }, [repos, status, reposLoading, activeRepo]);
+    }, [repos.length, status, reposLoading, activeRepo]);
 
     const stats = useMemo(() => {
         const all = [...dependencies, ...devDependencies];
