@@ -39,7 +39,7 @@ export default function RepositoriesPage() {
                 const dbRes = await fetch("/api/repos");
                 const dbData = await dbRes.json();
                 const dbRepos = dbData.repos || [];
-                
+
                 const activeFullNames = dbRepos
                     .filter((r: any) => r.isActive)
                     .map((r: any) => r.fullName);
@@ -61,7 +61,7 @@ export default function RepositoriesPage() {
                 // Filter GitHub repos to only show active ones as per previous logic (or show all?)
                 // Actually, the previous code filtered them: githubData.repos.filter((r: any) => activeSet.has(r.full_name))
                 const activeGithubRepos = githubRepos.filter((r: any) => activeSet.has(r.full_name));
-                
+
                 setRepos([...activeGithubRepos, ...manualRepos]);
             } catch (err: any) {
                 setError(err.message);
@@ -92,12 +92,12 @@ export default function RepositoriesPage() {
             await fetch("/api/repos", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     repos: [{
                         name: repo.name,
                         full_name: repo.full_name,
                         isActive: isActive
-                    }] 
+                    }]
                 })
             });
         } catch (err) {
@@ -200,7 +200,7 @@ export default function RepositoriesPage() {
         <div className="p-8 space-y-12 animate-slide-up max-w-[1400px] mx-auto">
             <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 pb-8 border-b border-slate-100">
                 <div>
-                    <h1 className="text-4xl font-black tracking-tighter uppercase italic text-slate-900">Source <span className="text-indigo-600 not-italic">Repositories</span></h1>
+                    <h1 className="text-4xl font-black tracking-tighter uppercase italic text-slate-900">Repositories </h1>
                     <p className="text-[10px] font-black tracking-[0.3em] text-slate-400 uppercase mt-2">Centralized Source Control Management</p>
                 </div>
                 <div className="flex gap-4">
@@ -272,7 +272,7 @@ export default function RepositoriesPage() {
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <svg className="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+                                                            <svg className="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" /></svg>
                                                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">GitHub</span>
                                                         </>
                                                     )}
@@ -303,13 +303,13 @@ export default function RepositoriesPage() {
                                     <td colSpan={7} className="px-8 py-20 text-center">
                                         <div className="flex flex-col items-center gap-4">
                                             <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center">
-                                                <svg className="w-8 h-8 text-slate-300" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+                                                <svg className="w-8 h-8 text-slate-300" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" /></svg>
                                             </div>
                                             <div>
                                                 <p className="text-slate-900 font-black uppercase italic tracking-tighter text-lg">No Repositories Synced</p>
                                                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-1">Connect your GitHub account to begin monitoring</p>
                                             </div>
-                                            <button 
+                                            <button
                                                 onClick={() => setShowConnectModal(true)}
                                                 className="mt-4 px-8 py-3 bg-indigo-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
                                             >
@@ -336,7 +336,7 @@ export default function RepositoriesPage() {
 
                         <div className="grid grid-cols-2 gap-4">
                             {[
-                                { name: "GitHub", icon: <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/> },
+                                { name: "GitHub", icon: <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" /> },
                                 { name: "Bitbucket", icon: <path d="M1.378 1.704a.798.798 0 00-.795.897l2.25 18.665c.04.33.32.576.65.576h16.89c.333 0 .61-.246.65-.576l2.25-18.665a.798.798 0 00-.795-.897H1.378zM17.062 14.5H6.938L5.75 5.5h12.5l-1.188 9z" /> },
                                 { name: "GitLab", icon: <path d="M22.65 14.39L20.21 6.8a.76.76 0 00-.28-.38.76.76 0 00-.47-.14.76.76 0 00-.47.14.76.76 0 00-.28.38l-2.44 7.59H5.73l-2.44-7.59a.75.75 0 00-.28-.38.76.76 0 00-.47-.14.76.76 0 00-.47.14.76.76 0 00-.28.38L1.35 14.39a.75.75 0 00.27.84l10.15 7.37a.76.76 0 00.43.14.76.76 0 00.43-.14l10.15-7.37a.75.75 0 00.27-.84z" /> },
                                 { name: "Manual", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /> },
@@ -371,10 +371,10 @@ export default function RepositoriesPage() {
                 </div>
             )}
 
-            <input 
-                type="file" 
-                ref={fileInputRef} 
-                className="hidden" 
+            <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
                 onChange={handleFileUpload}
                 accept=".json,.txt,.toml,.xml"
             />
