@@ -13,7 +13,8 @@ import {
   fetchLatestPythonVersion, 
   fetchLatestJavaVersion, 
   getUpdateType, 
-  getImpact 
+  getImpact,
+  checkSecurityVulnerability 
 } from "@/lib/npm";
 import { setCache } from "@/lib/cache-utils";
 
@@ -77,7 +78,18 @@ export async function POST(req: Request) {
 
                     latestVersion = versionResult.version;
                     repoUrl = versionResult.url;
+
+                    // Check for security vulnerabilities
+                    const securityResult = await checkSecurityVulnerability(registry, dep.name, dep.version);
+                    const hasVulnerability = securityResult.hasVulnerabilities;
+
                     updateType = getUpdateType(dep.version, latestVersion);
+
+                    // Refine Status Logic
+                    if (hasVulnerability) {
+                        updateType = "vulnerable";
+                    }
+
                     impact = getImpact(updateType);
 
                     let releasesUrl = repoUrl;
@@ -95,6 +107,7 @@ export async function POST(req: Request) {
                         releasesUrl,
                         isDev: dep.type === "dev",
                         registry: registry,
+                        vulnerabilities: securityResult.details
                     };
                 })
             );

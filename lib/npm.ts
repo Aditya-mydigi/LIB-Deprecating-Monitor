@@ -126,6 +126,38 @@ export function getUpdateType(current: string, latest: string): "up-to-date" | "
 }
 
 /**
+ * Fetches vulnerability data from OSV.dev for a specific package and version
+ */
+export async function checkSecurityVulnerability(registry: string, name: string, version: string): Promise<{ hasVulnerabilities: boolean; details: any[] }> {
+  try {
+    const ecosystemMap: Record<string, string> = {
+      npm: "npm",
+      pypi: "PyPI",
+      maven: "Maven",
+    };
+
+    const ecosystem = ecosystemMap[registry] || "npm";
+    const cleanVersion = normalizeVersion(version);
+
+    const response = await axios.post("https://api.osv.dev/v1/query", {
+      package: { name, ecosystem },
+      version: cleanVersion,
+    }, {
+      timeout: 5000,
+    });
+
+    const hasVulnerabilities = !!response.data.vulns && response.data.vulns.length > 0;
+    return {
+      hasVulnerabilities,
+      details: response.data.vulns || [],
+    };
+  } catch (error) {
+    console.error(`[OSV] Failed to check vulnerabilities for ${name}@${version}:`, error);
+    return { hasVulnerabilities: false, details: [] };
+  }
+}
+
+/**
  * Returns a human-readable impact description for an update type
  */
 export function getImpact(type: string): string {
@@ -138,6 +170,8 @@ export function getImpact(type: string): string {
       return "Breaking changes, review required";
     case "up-to-date":
       return "Up to date";
+    case "vulnerable":
+      return "Security vulnerability detected!";
     default:
       return "Unknown impact";
   }
