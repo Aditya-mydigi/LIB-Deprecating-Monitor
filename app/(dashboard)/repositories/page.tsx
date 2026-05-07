@@ -105,6 +105,29 @@ export default function RepositoriesPage() {
         }
     };
 
+    const handleDeleteRepo = async (repo: GitHubRepo) => {
+        try {
+            const res = await fetch("/api/repos", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ full_name: repo.full_name })
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "Failed to delete repository");
+            }
+
+            setRepos((current) => current.filter((item) => item.full_name !== repo.full_name));
+            const next = new Set(monitoredFullNames);
+            next.delete(repo.full_name);
+            setMonitoredFullNames(next);
+        } catch (err: any) {
+            console.error("Failed to delete repo", err);
+            alert(err.message || "Unable to delete repository");
+        }
+    };
+
     const handleSave = async () => {
         setSaving(true);
         try {
@@ -263,7 +286,7 @@ export default function RepositoriesPage() {
                                                     <button className="p-2.5 rounded-xl hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-all border border-transparent hover:border-slate-200 shadow-sm" title="Update">
                                                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                                                     </button>
-                                                    <button onClick={() => handleToggleRepo(repo)} className="p-2.5 rounded-xl hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-all border border-transparent hover:border-rose-100 shadow-sm" title={isActive ? "Disconnect" : "Delete"}>
+                                                    <button onClick={() => handleDeleteRepo(repo)} className="p-2.5 rounded-xl hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-all border border-transparent hover:border-rose-100 shadow-sm" title="Delete Repository">
                                                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                                     </button>
                                                 </div>

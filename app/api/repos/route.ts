@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 
 export async function POST(req: Request) {
     const session = await auth();
@@ -38,6 +38,37 @@ export async function POST(req: Request) {
                 }
             });
         }
+
+        return NextResponse.json({ success: true });
+    } catch (err: any) {
+        return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+}
+
+export async function DELETE(req: NextRequest) {
+    const session = await auth();
+    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    try {
+        const { full_name } = await req.json();
+        if (!full_name) {
+            return NextResponse.json({ error: "Missing full_name" }, { status: 400 });
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { username: session.user.name || "admin" }
+        });
+
+        if (!user) {
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
+        }
+
+        await prisma.repo.deleteMany({
+            where: {
+                userId: user.id,
+                fullName: full_name
+            }
+        });
 
         return NextResponse.json({ success: true });
     } catch (err: any) {
