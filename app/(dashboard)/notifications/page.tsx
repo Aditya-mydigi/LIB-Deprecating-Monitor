@@ -13,7 +13,11 @@ import {
     ChevronLeft, 
     ChevronRight,
     Loader2,
-    RefreshCw
+    RefreshCw,
+    Search,
+    Filter,
+    X,
+    Check
 } from "lucide-react";
 
 interface Notification {
@@ -32,12 +36,22 @@ export default function NotificationsPage() {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
+    const [search, setSearch] = useState("");
+    const [severityFilter, setSeverityFilter] = useState("all");
+    const [statusFilter, setStatusFilter] = useState("all");
     const limit = 10;
 
     const fetchNotifications = async (p: number) => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/notifications?page=${p}&limit=${limit}`);
+            const queryParams = new URLSearchParams({
+                page: p.toString(),
+                limit: limit.toString(),
+                severity: severityFilter,
+                isRead: statusFilter,
+                search: search
+            });
+            const res = await fetch(`/api/notifications?${queryParams.toString()}`);
             const data = await res.json();
             setNotifications(data.notifications || []);
             setTotalPages(data.totalPages || 1);
@@ -51,8 +65,16 @@ export default function NotificationsPage() {
     };
 
     useEffect(() => {
-        fetchNotifications(page);
-    }, [page]);
+        const timer = setTimeout(() => {
+            fetchNotifications(page);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [page, severityFilter, statusFilter, search]);
+
+    // Reset to page 1 when filters change
+    useEffect(() => {
+        setPage(1);
+    }, [severityFilter, statusFilter, search]);
 
     const toggleRead = async (id: string, currentRead: boolean) => {
         try {
@@ -118,7 +140,7 @@ export default function NotificationsPage() {
 
     return (
         <div className="p-10 max-w-5xl mx-auto space-y-10">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="space-y-2">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-600/20">
@@ -148,6 +170,72 @@ export default function NotificationsPage() {
                         <RefreshCw className={`w-4 h-4 group-hover:rotate-180 transition-transform duration-500 ${loading ? "animate-spin" : ""}`} />
                         Refresh
                     </button>
+                </div>
+            </div>
+
+            {/* Filters Bar */}
+            <div className="bg-white p-2 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/20 flex flex-wrap items-center gap-2">
+                <div className="relative flex-1 min-w-[240px]">
+                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input 
+                        type="text"
+                        placeholder="Search repo or package..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full pl-14 pr-6 py-4 bg-slate-50 border-transparent rounded-[2rem] text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none"
+                    />
+                    {search && (
+                        <button 
+                            onClick={() => setSearch("")}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 hover:bg-slate-200 rounded-full transition-colors"
+                        >
+                            <X className="w-3.5 h-3.5 text-slate-500" />
+                        </button>
+                    )}
+                </div>
+
+                <div className="flex items-center gap-2 p-1 bg-slate-50 rounded-[2rem]">
+                    <div className="flex items-center gap-2 px-4 py-2">
+                        <Filter className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Severity</span>
+                    </div>
+                    {["all", "high", "medium", "low"].map((sev) => (
+                        <button
+                            key={sev}
+                            onClick={() => setSeverityFilter(sev)}
+                            className={`px-6 py-2.5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${
+                                severityFilter === sev 
+                                    ? "bg-white text-indigo-600 shadow-sm border border-slate-200" 
+                                    : "text-slate-400 hover:text-slate-600"
+                            }`}
+                        >
+                            {sev}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="flex items-center gap-2 p-1 bg-slate-50 rounded-[2rem]">
+                    <div className="flex items-center gap-2 px-4 py-2">
+                        <Check className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</span>
+                    </div>
+                    {[
+                        { label: "All", value: "all" },
+                        { label: "Unread", value: "false" },
+                        { label: "Read", value: "true" }
+                    ].map((stat) => (
+                        <button
+                            key={stat.value}
+                            onClick={() => setStatusFilter(stat.value)}
+                            className={`px-6 py-2.5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${
+                                statusFilter === stat.value 
+                                    ? "bg-white text-indigo-600 shadow-sm border border-slate-200" 
+                                    : "text-slate-400 hover:text-slate-600"
+                            }`}
+                        >
+                            {stat.label}
+                        </button>
+                    ))}
                 </div>
             </div>
 

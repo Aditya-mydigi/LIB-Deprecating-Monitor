@@ -11,6 +11,10 @@ export async function GET(req: Request) {
     const limit = parseInt(searchParams.get("limit") || "10");
     const skip = (page - 1) * limit;
 
+    const severity = searchParams.get("severity");
+    const isRead = searchParams.get("isRead");
+    const search = searchParams.get("search");
+
     try {
         const user = await prisma.user.findUnique({
             where: { username: session.user.name || "admin" }
@@ -18,15 +22,33 @@ export async function GET(req: Request) {
 
         if (!user) return NextResponse.json({ notifications: [], total: 0 });
 
+        const where: any = { userId: user.id };
+
+        if (severity && severity !== "all") {
+            where.severity = severity;
+        }
+
+        if (isRead && isRead !== "all") {
+            where.isRead = isRead === "true";
+        }
+
+        if (search) {
+            where.OR = [
+                { repoName: { contains: search } },
+                { packageName: { contains: search } },
+                { message: { contains: search } }
+            ];
+        }
+
         const [notifications, total] = await Promise.all([
             prisma.notification.findMany({
-                where: { userId: user.id },
+                where,
                 orderBy: { createdAt: "desc" },
                 skip,
                 take: limit,
             }),
             prisma.notification.count({
-                where: { userId: user.id }
+                where
             })
         ]);
 

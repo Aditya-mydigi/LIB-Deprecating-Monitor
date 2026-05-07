@@ -90,8 +90,6 @@ export async function POST(req: Request) {
                     // Refine Status Logic
                     if (hasVulnerability) {
                         updateType = "vulnerable";
-                    } else if (updateType === "major") {
-                        // keep it major
                     }
 
                     impact = getImpact(updateType);
