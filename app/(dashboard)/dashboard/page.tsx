@@ -22,14 +22,14 @@ interface EnhancedDependency {
     name: string;
     currentVersion: string;
     latestVersion: string;
-    updateType: "up-to-date" | "patch" | "minor" | "major" | "unknown";
+    updateType: "up-to-date" | "patch" | "minor" | "major" | "vulnerable" | "unknown";
     impact: string;
     npmCommand: string;
     releasesUrl: string | null;
     isDev: boolean;
 }
 
-type UpdateFilter = "all" | "major" | "minor" | "patch" | "up-to-date";
+type UpdateFilter = "all" | "vulnerable" | "major" | "minor" | "patch" | "up-to-date";
 
 // --- Components ---
 
@@ -74,9 +74,10 @@ function StatCard({ label, value, color, icon, description, trend, href }: {
 function UpdateTypeBadge({ type }: { type: EnhancedDependency["updateType"] }) {
     const configs = {
         "up-to-date": { label: "Optimized", styles: "text-green-600 bg-green-50 border-green-100" },
-        "patch": { label: "Update", styles: "text-blue-600 bg-blue-50 border-blue-100" },
+        "patch": { label: "Patch Upd", styles: "text-blue-600 bg-blue-50 border-blue-100" },
         "minor": { label: "Minor Upd", styles: "text-amber-600 bg-amber-50 border-amber-100" },
-        "major": { label: "Critical", styles: "text-rose-600 bg-rose-50 border-rose-100" },
+        "major": { label: "Major Update", styles: "text-orange-600 bg-orange-50 border-orange-100" },
+        "vulnerable": { label: "Critical", styles: "text-rose-600 bg-rose-50 border-rose-100 animate-pulse" },
         "unknown": { label: "Verify", styles: "text-slate-500 bg-slate-50 border-slate-100" },
     };
     const config = configs[type];
@@ -240,12 +241,14 @@ export default function Dashboard() {
     const stats = useMemo(() => {
         const all = [...dependencies, ...devDependencies];
         const safe = all.filter(d => d.updateType === "up-to-date").length;
+        const vulnerable = all.filter(d => d.updateType === "vulnerable").length;
         const major = all.filter(d => d.updateType === "major").length;
         const minor = all.filter(d => d.updateType === "minor").length;
         return {
             total: all.length,
             outdated: all.length - safe,
             safe: safe,
+            vulnerable,
             major,
             minor,
             health: all.length > 0 ? Math.round((safe / all.length) * 100) : 0
@@ -255,7 +258,8 @@ export default function Dashboard() {
     const chartData = [
         { name: 'Healthy', value: stats.safe, color: '#6366f1' },
         { name: 'Minor', value: stats.minor, color: '#f59e0b' },
-        { name: 'Critical', value: stats.major, color: '#f43f5e' },
+        { name: 'Major', value: stats.major, color: '#f97316' },
+        { name: 'Critical', value: stats.vulnerable, color: '#f43f5e' },
     ].filter(d => d.value > 0);
 
     if (status === "loading" || (status === "authenticated" && reposLoading)) {
@@ -307,18 +311,18 @@ export default function Dashboard() {
                             </div>
                         </div>
 
-                        <div className="flex bg-white p-1 rounded-2xl border border-slate-200/60 shadow-sm self-end">
-                            {(["all", "major", "minor", "up-to-date"] as const).map((t) => (
+                        <div className="flex bg-white p-1 rounded-2xl border border-slate-200/60 shadow-sm self-end overflow-x-auto">
+                            {(["all", "vulnerable", "major", "minor", "up-to-date"] as const).map((t) => (
                                 <button
                                     key={t}
                                     onClick={() => setFilter(t)}
-                                    className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                                    className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
                                         filter === t 
                                         ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200" 
                                         : "text-slate-400 hover:text-slate-600"
                                     }`}
                                 >
-                                    {t === "up-to-date" ? "Healthy" : t}
+                                    {t === "up-to-date" ? "Healthy" : t === "vulnerable" ? "Critical" : t}
                                 </button>
                             ))}
                         </div>
@@ -349,13 +353,13 @@ export default function Dashboard() {
                                 description="Active Packages" 
                             />
                         </div>
-                        <div onClick={() => setFilter("major")} className="cursor-pointer">
+                        <div onClick={() => setFilter("vulnerable")} className="cursor-pointer">
                             <StatCard 
-                                label="Outdated Units" 
-                                value={stats.outdated} 
+                                label="Security Alerts" 
+                                value={stats.vulnerable} 
                                 color="bg-rose-500" 
-                                icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>}
-                                description="Action Required" 
+                                icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>}
+                                description="Critical Threats" 
                             />
                         </div>
                         <div onClick={() => setFilter("up-to-date")} className="cursor-pointer">

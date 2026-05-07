@@ -14,7 +14,8 @@ import {
   fetchLatestPythonVersion, 
   fetchLatestJavaVersion, 
   getUpdateType, 
-  getImpact 
+  getImpact,
+  checkSecurityVulnerability 
 } from "@/lib/npm";
 import { getCache, getCacheWithMeta, setCache } from "@/lib/cache-utils";
 
@@ -123,7 +124,20 @@ export async function GET(request: NextRequest) {
 
           latestVersion = versionResult.version;
           repoUrl = versionResult.url;
+          
+          // Check for security vulnerabilities
+          const securityResult = await checkSecurityVulnerability(dep.registry, dep.name, dep.version);
+          const hasVulnerability = securityResult.hasVulnerabilities;
+
           updateType = getUpdateType(dep.version, latestVersion);
+          
+          // Refine Status Logic
+          if (hasVulnerability) {
+            updateType = "vulnerable";
+          } else if (updateType === "major") {
+            // keep it major
+          }
+
           impact = getImpact(updateType);
 
           let releasesUrl = repoUrl;
@@ -141,6 +155,7 @@ export async function GET(request: NextRequest) {
             releasesUrl,
             isDev: dep.type === "dev",
             registry: dep.registry,
+            vulnerabilities: securityResult.details
           };
         })
       );
